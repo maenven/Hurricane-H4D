@@ -86,3 +86,23 @@ add an entry here. Procedure: [upstream-merge-workflow.md](upstream-merge-workfl
 - **Superseded when:** upstream implements equivalent ack-based mounting and stamina-aware
   speed restoration.
 - **Detail:** none yet beyond code comments in `GameUI.skiSpeedTick()` and `SkisScript`.
+
+## 5. Auto Kin (Web Map group kinning)
+
+- **Behavior:** with "Share my hearth secret with my Web Map group" on (Options → Advanced
+  Settings → Server Integration), the client publishes the character's hearth secret to the Web Map
+  server, generates one if the character has none, and ~15 s after login replays every other group
+  member's secret as "Add kin by Hearth Secret". "Sync kin from Web Map" in Kith & Kin does it on
+  demand (shift-click resends to current kin too).
+- **Why:** everyone on the group's mapper server gets kinned automatically, without trading secrets.
+- **Fork-owned:** `src/haven/automated/AutoKin.java`.
+- **Shared hooks:** `BuddyWnd` (`autoKin` field, `autoKinStatus` label + sync button after
+  "Add kin from file", `tick()` override, one call each in `setpwd()`, `uimsg("add")`,
+  `uimsg("pwd")`); `OptWnd` (four `autoKin*CheckBox` fields + tooltips in
+  `ServerIntegrationSettingsPanel`, `AutoKin` import).
+- **Invariants:** reuses the `webMapEndpoint` pref (`https://host/client/<token>`), no separate
+  token; endpoints `POST /kinSecret` and `GET /kinSecrets?genus=`; nothing is sent unless
+  `autoKinShareSecret` is on (default **off**); generation never replaces an existing secret and a
+  manual Clear holds for the session; secrets are never logged; HTTP stays off the UI thread.
+- **Superseded when:** upstream ships an equivalent shared-secret auto-kin.
+- **Detail:** [auto-kin.md](auto-kin.md).
