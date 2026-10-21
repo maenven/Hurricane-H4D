@@ -44,6 +44,8 @@ public class BuddyWnd extends Widget implements Iterable<BuddyWnd.Buddy> {
     private BuddyInfo info = null;
     private Widget infof;
     public int serial = 0;
+    public final haven.automated.AutoKin autoKin = new haven.automated.AutoKin(this);
+    private Label autoKinStatus;
     public static final int width = UI.scale(270);
     public static final int margin1 = UI.scale(5);
     public static final int margin2 = 2 * margin1;
@@ -613,6 +615,14 @@ public class BuddyWnd extends Widget implements Iterable<BuddyWnd.Buddy> {
 		});
 	}), prev.pos("bl").adds(0, 5));
 
+	prev = add(new Button(UI.scale(140), "Sync kin from Web Map").action(() -> {
+		autoKin.startSync(ui.modshift);
+	}), prev.pos("bl").adds(0, 5));
+	prev.tooltip = RichText.render("Auto Kin: adds everyone in your Web Map group as kin, using the hearth secrets they shared." +
+		"\nShift-click to resend every secret, even to current kin." +
+		"\n\n$col[185,185,185]{Needs Auto Kin turned on in Options > Advanced Settings > Server Integration, and Web Map admin access.}", UI.scale(300));
+	autoKinStatus = add(new Label(""), prev.pos("bl").adds(0, 2));
+
 	pack();
     }
 
@@ -628,6 +638,15 @@ public class BuddyWnd extends Widget implements Iterable<BuddyWnd.Buddy> {
 	wdgmsg("pwd", pass);
 	charpass.settext(pass);
 	charpass.commit();
+	autoKin.onSetSecret(pass);
+    }
+
+    public void tick(double dt) {
+	super.tick(dt);
+	autoKin.tick();
+	String st = autoKin.status();
+	if((autoKinStatus != null) && !st.equals(autoKinStatus.texts))
+	    autoKinStatus.settext(st);
     }
 
     public void setpname(String name) {
@@ -669,6 +688,7 @@ public class BuddyWnd extends Widget implements Iterable<BuddyWnd.Buddy> {
 		Collections.sort(buddies, bcmp);
 	    }
 	    serial++;
+	    autoKin.onKinAdded(b);
 	} else if(msg == "rm") {
 	    int id = INT.of(args[0]);
 	    Buddy b;
@@ -720,6 +740,7 @@ public class BuddyWnd extends Widget implements Iterable<BuddyWnd.Buddy> {
 	    charpass.settext(STR.of(args[0]));
 	    charpass.buf.point(charpass.buf.length());
 	    charpass.commit();
+	    autoKin.onServerSecret(STR.of(args[0]));
 	} else if(msg == "pname") {
 	    pname.settext(STR.of(args[0]));
 	    pname.buf.point(pname.buf.length());

@@ -26,6 +26,7 @@
 
 package haven;
 
+import haven.automated.AutoKin;
 import haven.automated.mapper.MappingClient;
 import haven.render.*;
 import haven.res.sfx.ambient.weather.wsound.WeatherSound;
@@ -4839,6 +4840,10 @@ public class OptWnd extends Window {
 
 	public static TextEntry cookBookEndpointTextEntry;
 	public static TextEntry cookBookTokenTextEntry;
+	public static CheckBox autoKinShareSecretCheckBox;
+	public static CheckBox autoKinGenerateSecretCheckBox;
+	public static CheckBox autoKinOnLoginCheckBox;
+	public static CheckBox autoKinGreenGroupCheckBox;
 
 
 
@@ -4880,6 +4885,35 @@ public class OptWnd extends Window {
 				}
 			}, prev.pos("ur").adds(6, 0));
 			liveLocationNameTextEntry.tooltip = liveLocationNameTooltip;
+
+			prev = add(new Label("Auto Kin (uses your Web Map Endpoint)"), prev.pos("bl").adds(0, 26).x(70));
+			prev = add(autoKinShareSecretCheckBox = new CheckBox("Share my hearth secret with my Web Map group"){
+				{a = Utils.getprefb(AutoKin.PREF_SHARE, false);}
+				public void changed(boolean val) {
+					Utils.setprefb(AutoKin.PREF_SHARE, val);
+				}
+			}, prev.pos("bl").adds(0, 8).x(12));
+			autoKinShareSecretCheckBox.tooltip = autoKinShareSecretTooltip;
+			prev = add(autoKinGenerateSecretCheckBox = new CheckBox("Generate a hearth secret if my character has none"){
+				{a = Utils.getprefb(AutoKin.PREF_GENERATE, true);}
+				public void changed(boolean val) {
+					Utils.setprefb(AutoKin.PREF_GENERATE, val);
+				}
+			}, prev.pos("bl").adds(0, 4).x(32));
+			autoKinGenerateSecretCheckBox.tooltip = autoKinGenerateSecretTooltip;
+			prev = add(autoKinOnLoginCheckBox = new CheckBox("Auto-kin my Web Map group on login"){
+				{a = Utils.getprefb(AutoKin.PREF_ON_LOGIN, true);}
+				public void changed(boolean val) {
+					Utils.setprefb(AutoKin.PREF_ON_LOGIN, val);
+				}
+			}, prev.pos("bl").adds(0, 4));
+			autoKinOnLoginCheckBox.tooltip = autoKinOnLoginTooltip;
+			prev = add(autoKinGreenGroupCheckBox = new CheckBox("Put kin added by Auto Kin in the green group"){
+				{a = Utils.getprefb(AutoKin.PREF_GREEN, true);}
+				public void changed(boolean val) {
+					Utils.setprefb(AutoKin.PREF_GREEN, val);
+				}
+			}, prev.pos("bl").adds(0, 4));
 
             prev = add(new Label("Cookbook Integration"), prev.pos("bl").adds(0, 26).x(110));
 			prev = add(new Label("Cookbook Endpoint:"), prev.pos("bl").adds(0, 16).x(0));
@@ -5686,6 +5720,13 @@ public class OptWnd extends Window {
             "\n$col[218,163,0]{This is an experimental feature. It should work fine, but I wouldn't trust it with my life.}", UI.scale(300));
 
 	// Server Integration Settings Tooltips
+	private static final Object autoKinShareSecretTooltip = RichText.render("Auto Kin: publishes this character's hearth secret to your Web Map server, so everyone else in your Web Map group gets you as kin automatically, and you get them." +
+			"\n\n$col[218,163,0]{Note:} Only Web Map admins are part of the Auto Kin group. Your Web Map server must also support Auto Kin." +
+			"\n\n$col[185,185,185]{Anyone in the group can kin this character with the shared secret. Clear your hearth secret in Kith & Kin to stop sharing it.}", UI.scale(320));
+	private static final Object autoKinGenerateSecretTooltip = RichText.render("If the character you log in with has no hearth secret, Auto Kin sets a random one so your group can still kin you." +
+			"\n\n$col[185,185,185]{An existing secret is never replaced.}", UI.scale(300));
+	private static final Object autoKinOnLoginTooltip = RichText.render("Shortly after logging in, adds every Web Map group member who isn't your kin yet." +
+			"\n\n$col[185,185,185]{You can also do it any time with the \"Sync kin from Web Map\" button in Kith & Kin.}", UI.scale(300));
 	private static final Object uploadMapTilesTooltip = RichText.render("Enable this to upload your map tiles to your web map server.", UI.scale(300));
 	private static final Object sendLiveLocationTooltip = RichText.render("Enable this to show your current location on your web map server.", UI.scale(320));
 	private static final Object liveLocationNameTooltip = RichText.render("If you send your location to the server, your name will appear as whatever you set in this text entry + your current character name." +
