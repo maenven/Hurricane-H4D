@@ -37,10 +37,18 @@ public class AutoKin {
     public static final String PREF_SHARE = "autoKinShareSecret";
     public static final String PREF_GENERATE = "autoKinGenerateSecret";
     public static final String PREF_ON_LOGIN = "autoKinOnLogin";
-    public static final String PREF_GREEN = "autoKinGreenGroup";
-
-    /** Index into {@link BuddyWnd#gc} that holds the green group. */
+    /** Kin group (index into {@link BuddyWnd#gc}) for kin from the Web Map group, or {@link #GROUP_KEEP}. */
+    public static final String PREF_GROUP = "autoKinGroup";
+    /** Replaced by {@link #PREF_GROUP}; only read once to carry an old choice over. */
+    private static final String PREF_GREEN_OLD = "autoKinGreenGroup";
+    /** {@link #PREF_GROUP} value: leave kin in whatever group the game put them. */
+    public static final int GROUP_KEEP = -1;
+    /** The group new kin arrive in. */
+    private static final int DEFAULT_GROUP = 0;
     private static final int GREEN_GROUP = 1;
+    /** Groups offered in the options: the seven colours after the default white one. */
+    public static final int[] GROUP_CHOICES = {GROUP_KEEP, 1, 2, 3, 4, 5, 6, 7};
+    private static final String[] GROUP_NAMES = {"White", "Green", "Red", "Blue", "Cyan", "Yellow", "Purple", "Orange"};
     /** Seconds between two "bypwd" messages while a sync drains. */
     private static final double SEND_INTERVAL = 0.25;
     /** How long after the last "bypwd" an incoming "add" is still attributed to the sync. */
@@ -51,6 +59,8 @@ public class AutoKin {
     private static final double AUTOGEN_GRACE = 10.0;
     /** Delay after login before the automatic sync, so the kin list has finished arriving. */
     private static final double LOGIN_SYNC_DELAY = 15.0;
+    /** Minimum seconds between two name-list fetches caused by an unknown new kin. */
+    private static final double POOL_REFETCH = 30.0;
     private static final int TIMEOUT_MS = 10000;
     private static final String PWCHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
     /** A hearth secret is a credential: worth a real CSPRNG rather than Math.random(). */
@@ -83,6 +93,15 @@ public class AutoKin {
     private final ConcurrentLinkedQueue<String[]> sendQueue = new ConcurrentLinkedQueue<>();
     private int syncTotal = 0, syncSent = 0, syncAdded = 0;
     private double lastSend = 0;
+    /** Character names of the Web Map group from the last kinSecrets fetch, this character excluded. */
+    private volatile Set<String> poolNames = Collections.emptySet();
+    /** Bumped whenever {@link #poolNames} is replaced. */
+    private volatile int poolSerial = 0;
+    /** New kin not in {@link #poolNames}, re-checked once the names are fetched again. */
+    private final List<BuddyWnd.Buddy> unknownAdds = new ArrayList<>();
+    private int unknownAddsSerial = -1;
+    private volatile boolean poolLoading = false;
+    private double lastPoolFetch = -POOL_REFETCH;
 
     /** Latest status line; the window shows it under the sync button. */
     private volatile String status = "";
@@ -97,6 +116,23 @@ public class AutoKin {
 
     public static boolean sharing() {
         return Utils.getprefb(PREF_SHARE, false);
+    }
+
+    /** The chosen kin group, or {@link #GROUP_KEEP}. Defaults to green, or to the old checkbox's choice. */
+    public static int group() {
+        int def = Utils.getprefb(PREF_GREEN_OLD, true) ? GREEN_GROUP : GROUP_KEEP;
+        int grp = Utils.getprefi(PREF_GROUP, def);
+        return ((grp == GROUP_KEEP) || ((grp > DEFAULT_GROUP) && (grp < GROUP_NAMES.length))) ? grp : def;
+    }
+
+    public static void setGroup(int grp) {
+        Utils.setprefi(PREF_GROUP, grp);
+    }
+
+    public static String groupName(int grp) {
+        if (grp == GROUP_KEEP)
+            return "Don't change";
+        return ((grp >= 0) && (grp < GROUP_NAMES.length)) ? GROUP_NAMES[grp] : ("Group " + grp);
     }
 
     // ------------------------------------------------------------------ hooks from BuddyWnd
@@ -126,13 +162,30 @@ public class AutoKin {
         queuePublish(secret);
     }
 
-    /** A kin was added ("add" message). Any add while a sync drains is taken to be ours. */
+    /**
+     * A kin was added ("add" message). Any add while a sync drains is taken to be ours. Kin whose
+     * name is in the Web Map group are moved to the chosen group at any time, so a group member
+     * whose own sync kinned us while we were logged in ends up there too.
+     */
     public void onKinAdded(BuddyWnd.Buddy b) {
-        if (b == null || !syncActive())
+        if (b == null)
             return;
-        syncAdded++;
-        if (Utils.getprefb(PREF_GREEN, true) && (b.group != GREEN_GROUP))
-            b.chgrp(GREEN_GROUP);
+        boolean ours = syncActive();
+        if (ours)
+            syncAdded++;
+        if (!sharing())
+            return;
+        int grp = group();
+        if ((grp == GROUP_KEEP) || (b.group == grp))
+            return;
+        if (ours || poolNames.contains(b.name)) {
+            b.chgrp(grp);
+        } else if (endpoint() != null) {
+            /* Maybe a group member who joined after our last fetch: ask the server again. */
+            if (unknownAdds.isEmpty())
+                unknownAddsSerial = poolSerial;
+            unknownAdds.add(b);
+        }
     }
 
     /** "Sync kin from Web Map" button. Shift-click resends every secret, current kin included. */
@@ -159,27 +212,79 @@ public class AutoKin {
         setStatus("Loading kin from Web Map...");
         http.execute(() -> {
             try {
-                Response r = request("GET", base + "/kinSecrets?genus=" + URLEncoder.encode(genus, "UTF-8"), null);
-                if (r.code != 200) {
-                    setStatus(failText(r.code));
-                    return;
-                }
-                JSONArray arr = new JSONArray(r.body);
-                List<String[]> rows = new ArrayList<>();
-                for (int i = 0; i < arr.length(); i++) {
-                    JSONObject o = arr.getJSONObject(i);
-                    String name = o.optString("charName", "");
-                    String secret = o.optString("secret", "");
-                    if (name.isEmpty() || secret.isEmpty() || name.equals(mine))
-                        continue;
-                    rows.add(new String[] {name, secret});
-                }
-                syncRows = rows;
+                List<String[]> rows = fetchRows(base, genus, mine);
+                if (rows != null)
+                    syncRows = rows;
             } catch (Exception e) {
                 setStatus("Web Map unreachable");
                 System.out.println("[AutoKin] sync failed: " + e);
             } finally {
                 syncLoading = false;
+            }
+        });
+    }
+
+    /**
+     * GET kinSecrets on the HTTP thread and refresh {@link #poolNames}. Returns the
+     * {name, secret} rows of everyone but this character, or null (status set) on an HTTP error.
+     */
+    private List<String[]> fetchRows(String base, String genus, String mine) throws Exception {
+        Response r = request("GET", base + "/kinSecrets?genus=" + URLEncoder.encode(genus, "UTF-8"), null);
+        if (r.code != 200) {
+            setStatus(failText(r.code));
+            return null;
+        }
+        JSONArray arr = new JSONArray(r.body);
+        List<String[]> rows = new ArrayList<>();
+        Set<String> names = new HashSet<>();
+        for (int i = 0; i < arr.length(); i++) {
+            JSONObject o = arr.getJSONObject(i);
+            String name = o.optString("charName", "");
+            String secret = o.optString("secret", "");
+            if (name.isEmpty() || secret.isEmpty() || name.equals(mine))
+                continue;
+            rows.add(new String[] {name, secret});
+            names.add(name);
+        }
+        poolNames = Collections.unmodifiableSet(names);
+        poolSerial++;
+        return rows;
+    }
+
+    /** Re-check kin that arrived outside a sync once a fresh name list is in. */
+    private void tickUnknownAdds(double now) {
+        if (unknownAdds.isEmpty())
+            return;
+        if (poolSerial != unknownAddsSerial) {
+            int grp = group();
+            Set<String> pool = poolNames;
+            for (BuddyWnd.Buddy b : unknownAdds) {
+                if ((grp != GROUP_KEEP) && (b.group == DEFAULT_GROUP) && pool.contains(b.name))
+                    b.chgrp(grp);
+            }
+            unknownAdds.clear();
+            return;
+        }
+        if (poolLoading || syncLoading || ((now - lastPoolFetch) < POOL_REFETCH))
+            return;
+        String base = endpoint();
+        GameUI gui = gui();
+        if (!sharing() || base == null || gui == null || empty(gui.genus) || empty(gui.chrid)) {
+            unknownAdds.clear();
+            return;
+        }
+        lastPoolFetch = now;
+        poolLoading = true;
+        final String genus = gui.genus, mine = gui.chrid;
+        http.execute(() -> {
+            try {
+                if (fetchRows(base, genus, mine) == null)
+                    poolSerial++; /* give up on these adds instead of retrying forever */
+            } catch (Exception e) {
+                poolSerial++;
+                System.out.println("[AutoKin] kin list refresh failed: " + e);
+            } finally {
+                poolLoading = false;
             }
         });
     }
@@ -191,6 +296,7 @@ public class AutoKin {
         tickPublish(now);
         tickLoginSync(now);
         tickSync(now);
+        tickUnknownAdds(now);
     }
 
     // ------------------------------------------------------------------ own secret
@@ -286,6 +392,9 @@ public class AutoKin {
      * Turn the server's rows into a send queue, on the UI thread because it reads the kin list.
      * Anyone already in the list by name is skipped. Kin shown under a nickname do not match and
      * get their secret re-sent, which the game server ignores for existing kin.
+     * <p>
+     * Existing kin from the Web Map group who are still in the default (white) group are moved to
+     * the chosen group. Kin the player put in any other group themselves are left alone.
      */
     private void prepareSync() {
         List<String[]> rows = syncRows;
@@ -293,8 +402,13 @@ public class AutoKin {
             return;
         syncRows = null;
         Set<String> kin = new HashSet<>();
-        for (BuddyWnd.Buddy b : wnd)
+        int grp = group();
+        Set<String> pool = poolNames;
+        for (BuddyWnd.Buddy b : wnd) {
             kin.add(b.name);
+            if ((grp != GROUP_KEEP) && (b.group == DEFAULT_GROUP) && pool.contains(b.name))
+                b.chgrp(grp);
+        }
         sendQueue.clear();
         for (String[] r : rows) {
             if (!syncForce && kin.contains(r[0]))
@@ -330,7 +444,7 @@ public class AutoKin {
                 setStatus("Added " + syncAdded + " kin");
                 GameUI gui = gui();
                 if (gui != null)
-                    gui.msg("Auto Kin: added " + syncAdded + " kin from your Web Map group.", BuddyWnd.gc[GREEN_GROUP]);
+                    gui.msg("Auto Kin: added " + syncAdded + " kin from your Web Map group.", BuddyWnd.gcolor((group() == GROUP_KEEP) ? GREEN_GROUP : group()));
             } else {
                 setStatus("Kin up to date");
             }
