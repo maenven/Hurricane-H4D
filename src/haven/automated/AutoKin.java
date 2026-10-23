@@ -60,7 +60,9 @@ public class AutoKin {
     /** Delay after login before the automatic sync, so the kin list has finished arriving. */
     private static final double LOGIN_SYNC_DELAY = 15.0;
     /** Minimum seconds between two name-list fetches caused by an unknown new kin. */
-    private static final double POOL_REFETCH = 30.0;
+    private static final double POOL_REFETCH = 10.0;
+    /** Name-list fetches for one batch of unknown new kin before giving up on them. */
+    private static final int POOL_REFETCH_TRIES = 3;
     private static final int TIMEOUT_MS = 10000;
     private static final String PWCHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
     /** A hearth secret is a credential: worth a real CSPRNG rather than Math.random(). */
@@ -95,11 +97,11 @@ public class AutoKin {
     private double lastSend = 0;
     /** Character names of the Web Map group from the last kinSecrets fetch, this character excluded. */
     private volatile Set<String> poolNames = Collections.emptySet();
-    /** Bumped whenever {@link #poolNames} is replaced. */
-    private volatile int poolSerial = 0;
     /** New kin not in {@link #poolNames}, re-checked once the names are fetched again. */
     private final List<BuddyWnd.Buddy> unknownAdds = new ArrayList<>();
-    private int unknownAddsSerial = -1;
+    /** Set by the HTTP thread when a fetch started by {@link #tickUnknownAdds} has finished. */
+    private volatile boolean refreshDone = false;
+    private int refreshTries = 0;
     private volatile boolean poolLoading = false;
     private double lastPoolFetch = -POOL_REFETCH;
 
@@ -183,9 +185,8 @@ public class AutoKin {
         } else if (endpoint() != null) {
             /* Maybe a group member who joined after our last fetch: ask the server again. */
             System.out.println("[AutoKin] new kin '" + b.name + "' is not in the Web Map group list yet, refreshing it");
-            if (unknownAdds.isEmpty())
-                unknownAddsSerial = poolSerial;
             unknownAdds.add(b);
+            refreshTries = 0;
         }
     }
 
@@ -248,25 +249,19 @@ public class AutoKin {
             names.add(name);
         }
         poolNames = Collections.unmodifiableSet(names);
-        poolSerial++;
         return rows;
     }
 
     /**
      * Move every kin from the Web Map group to the chosen group now, e.g. after the option changed.
-     * Uses the names from the last fetch, or fetches them first if there are none yet.
+     * Uses the names from the last fetch, or runs a sync (which regroups) if there are none yet.
      */
     public void regroup() {
         if (!sharing() || (group() == GROUP_KEEP))
             return;
         Set<String> pool = poolNames;
         if (pool.isEmpty()) {
-            for (BuddyWnd.Buddy b : wnd) {
-                if (unknownAdds.isEmpty())
-                    unknownAddsSerial = poolSerial;
-                unknownAdds.add(b);
-            }
-            lastPoolFetch = -POOL_REFETCH;
+            startSync(false);
             return;
         }
         int grp = group();
@@ -276,40 +271,57 @@ public class AutoKin {
         }
     }
 
-    /** Re-check kin that arrived outside a sync once a fresh name list is in. */
+    /**
+     * Re-check kin that arrived outside a sync against a name list fetched after they arrived.
+     * A group member's secret can reach the server a moment after their client kinned us, so a
+     * name still missing is looked up again a few times before giving up.
+     */
     private void tickUnknownAdds(double now) {
         if (unknownAdds.isEmpty())
             return;
-        if (poolSerial != unknownAddsSerial) {
+        if (refreshDone) {
+            refreshDone = false;
             int grp = group();
             Set<String> pool = poolNames;
-            for (BuddyWnd.Buddy b : unknownAdds) {
-                if ((grp != GROUP_KEEP) && (b.group != grp) && pool.contains(b.name))
+            for (Iterator<BuddyWnd.Buddy> i = unknownAdds.iterator(); i.hasNext();) {
+                BuddyWnd.Buddy b = i.next();
+                if ((grp == GROUP_KEEP) || (b.group == grp)) {
+                    i.remove();
+                } else if (pool.contains(b.name)) {
                     move(b, grp);
+                    i.remove();
+                }
             }
-            unknownAdds.clear();
+            if (!unknownAdds.isEmpty() && (refreshTries >= POOL_REFETCH_TRIES)) {
+                for (BuddyWnd.Buddy b : unknownAdds)
+                    System.out.println("[AutoKin] kin '" + b.name + "' is not in the Web Map group list, leaving their group as is");
+                unknownAdds.clear();
+            }
+            if (unknownAdds.isEmpty())
+                refreshTries = 0;
             return;
         }
-        if (poolLoading || syncLoading || ((now - lastPoolFetch) < POOL_REFETCH))
+        if (poolLoading || ((now - lastPoolFetch) < POOL_REFETCH))
             return;
         String base = endpoint();
         GameUI gui = gui();
         if (!sharing() || base == null || gui == null || empty(gui.genus) || empty(gui.chrid)) {
             unknownAdds.clear();
+            refreshTries = 0;
             return;
         }
         lastPoolFetch = now;
+        refreshTries++;
         poolLoading = true;
         final String genus = gui.genus, mine = gui.chrid;
         http.execute(() -> {
             try {
-                if (fetchRows(base, genus, mine) == null)
-                    poolSerial++; /* give up on these adds instead of retrying forever */
+                fetchRows(base, genus, mine);
             } catch (Exception e) {
-                poolSerial++;
                 System.out.println("[AutoKin] kin list refresh failed: " + e);
             } finally {
                 poolLoading = false;
+                refreshDone = true;
             }
         });
     }
