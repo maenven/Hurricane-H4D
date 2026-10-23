@@ -178,7 +178,9 @@ public class AutoKin {
         if (!sharing())
             return;
         int grp = group();
-        if ((grp == GROUP_KEEP) || (b.group == grp))
+        /* The game also sends "add" for every existing kin at login, so only white (unplaced)
+         * kin are ever moved: anyone already in a group keeps it, whoever put them there. */
+        if ((grp == GROUP_KEEP) || (b.group != DEFAULT_GROUP))
             return;
         if (ours || poolNames.contains(b.name)) {
             move(b, grp);
@@ -253,25 +255,6 @@ public class AutoKin {
     }
 
     /**
-     * Move every kin from the Web Map group to the chosen group now, e.g. after the option changed.
-     * Uses the names from the last fetch, or runs a sync (which regroups) if there are none yet.
-     */
-    public void regroup() {
-        if (!sharing() || (group() == GROUP_KEEP))
-            return;
-        Set<String> pool = poolNames;
-        if (pool.isEmpty()) {
-            startSync(false);
-            return;
-        }
-        int grp = group();
-        for (BuddyWnd.Buddy b : wnd) {
-            if ((b.group != grp) && pool.contains(b.name))
-                move(b, grp);
-        }
-    }
-
-    /**
      * Re-check kin that arrived outside a sync against a name list fetched after they arrived.
      * A group member's secret can reach the server a moment after their client kinned us, so a
      * name still missing is looked up again a few times before giving up.
@@ -285,7 +268,8 @@ public class AutoKin {
             Set<String> pool = poolNames;
             for (Iterator<BuddyWnd.Buddy> i = unknownAdds.iterator(); i.hasNext();) {
                 BuddyWnd.Buddy b = i.next();
-                if ((grp == GROUP_KEEP) || (b.group == grp)) {
+                if ((grp == GROUP_KEEP) || (b.group != DEFAULT_GROUP)) {
+                    /* Already placed, by us or by the player: leave it. */
                     i.remove();
                 } else if (pool.contains(b.name)) {
                     move(b, grp);
@@ -430,7 +414,9 @@ public class AutoKin {
      * Anyone already in the list by name is skipped. Kin shown under a nickname do not match and
      * get their secret re-sent, which the game server ignores for existing kin.
      * <p>
-     * Existing kin from the Web Map group who are not in the chosen group are moved to it.
+     * Existing kin from the Web Map group who are still in the default (white) group are moved to
+     * the chosen group. Kin in any other group are never touched: players use groups for
+     * permissions, so a kin the player placed by hand stays where they put them.
      */
     private void prepareSync() {
         List<String[]> rows = syncRows;
@@ -442,7 +428,7 @@ public class AutoKin {
         Set<String> pool = poolNames;
         for (BuddyWnd.Buddy b : wnd) {
             kin.add(b.name);
-            if ((grp != GROUP_KEEP) && (b.group != grp) && pool.contains(b.name))
+            if ((grp != GROUP_KEEP) && (b.group == DEFAULT_GROUP) && pool.contains(b.name))
                 move(b, grp);
         }
         sendQueue.clear();
