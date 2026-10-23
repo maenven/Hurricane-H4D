@@ -41,8 +41,8 @@ HnHMapperServer returns 404, which the client reports as "Web Map server has no 
 5. Every fetch keeps the group's character names (`poolNames`). A `uimsg("add")` at any time (also
    outside our own sync: another member's sync kinned us) for a name in that list is moved to the
    chosen group. An add for an unknown name triggers one name-list refetch (at most every 30 s), and
-   is moved if it turns up. Each sync also moves group members still in the default group 0; kin the
-   player moved to another group by hand are left alone.
+   is moved if it turns up. Each sync, and changing the option, also moves every existing kin from the
+   group who is in another group.
 
 Name matching means kin shown under a nickname get their secret re-sent each sync; harmless, the
 game ignores `bypwd` for existing kin.

@@ -4938,6 +4938,8 @@ public class OptWnd extends Window {
 				public void change(Integer item) {
 					super.change(item);
 					AutoKin.setGroup(item);
+					if ((ui != null) && (ui.gui != null) && (ui.gui.buddies != null))
+						ui.gui.buddies.autoKin.regroup();
 				}
 			}, prev.pos("ur").adds(6, 0));
 			autoKinGroupDropbox.tooltip = autoKinGroupTooltip;
@@ -5754,8 +5756,8 @@ public class OptWnd extends Window {
 			"\n\n$col[185,185,185]{An existing secret is never replaced.}", UI.scale(300));
 	private static final Object autoKinOnLoginTooltip = RichText.render("Shortly after logging in, adds every Web Map group member who isn't your kin yet." +
 			"\n\n$col[185,185,185]{You can also do it any time with the \"Sync kin from Web Map\" button in Kith & Kin.}", UI.scale(300));
-	private static final Object autoKinGroupTooltip = RichText.render("The Kith & Kin group that kin from your Web Map group are put in: everyone Auto Kin adds, anyone in the group who adds you, and group members still in the default white group when you sync." +
-			"\n\n$col[185,185,185]{Kin you moved to another group yourself are left there. \"Don't change\" turns this off.}", UI.scale(320));
+	private static final Object autoKinGroupTooltip = RichText.render("The Kith & Kin group that kin from your Web Map group are put in: everyone Auto Kin adds, and anyone in the group who adds you." +
+			"\n\n$col[185,185,185]{Changing this also moves your existing kin from the group. \"Don't change\" turns this off.}", UI.scale(320));
 	private static final Object uploadMapTilesTooltip = RichText.render("Enable this to upload your map tiles to your web map server.", UI.scale(300));
 	private static final Object sendLiveLocationTooltip = RichText.render("Enable this to show your current location on your web map server.", UI.scale(320));
 	private static final Object liveLocationNameTooltip = RichText.render("If you send your location to the server, your name will appear as whatever you set in this text entry + your current character name." +

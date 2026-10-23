@@ -179,9 +179,10 @@ public class AutoKin {
         if ((grp == GROUP_KEEP) || (b.group == grp))
             return;
         if (ours || poolNames.contains(b.name)) {
-            b.chgrp(grp);
+            move(b, grp);
         } else if (endpoint() != null) {
             /* Maybe a group member who joined after our last fetch: ask the server again. */
+            System.out.println("[AutoKin] new kin '" + b.name + "' is not in the Web Map group list yet, refreshing it");
             if (unknownAdds.isEmpty())
                 unknownAddsSerial = poolSerial;
             unknownAdds.add(b);
@@ -251,6 +252,30 @@ public class AutoKin {
         return rows;
     }
 
+    /**
+     * Move every kin from the Web Map group to the chosen group now, e.g. after the option changed.
+     * Uses the names from the last fetch, or fetches them first if there are none yet.
+     */
+    public void regroup() {
+        if (!sharing() || (group() == GROUP_KEEP))
+            return;
+        Set<String> pool = poolNames;
+        if (pool.isEmpty()) {
+            for (BuddyWnd.Buddy b : wnd) {
+                if (unknownAdds.isEmpty())
+                    unknownAddsSerial = poolSerial;
+                unknownAdds.add(b);
+            }
+            lastPoolFetch = -POOL_REFETCH;
+            return;
+        }
+        int grp = group();
+        for (BuddyWnd.Buddy b : wnd) {
+            if ((b.group != grp) && pool.contains(b.name))
+                move(b, grp);
+        }
+    }
+
     /** Re-check kin that arrived outside a sync once a fresh name list is in. */
     private void tickUnknownAdds(double now) {
         if (unknownAdds.isEmpty())
@@ -259,8 +284,8 @@ public class AutoKin {
             int grp = group();
             Set<String> pool = poolNames;
             for (BuddyWnd.Buddy b : unknownAdds) {
-                if ((grp != GROUP_KEEP) && (b.group == DEFAULT_GROUP) && pool.contains(b.name))
-                    b.chgrp(grp);
+                if ((grp != GROUP_KEEP) && (b.group != grp) && pool.contains(b.name))
+                    move(b, grp);
             }
             unknownAdds.clear();
             return;
@@ -393,8 +418,7 @@ public class AutoKin {
      * Anyone already in the list by name is skipped. Kin shown under a nickname do not match and
      * get their secret re-sent, which the game server ignores for existing kin.
      * <p>
-     * Existing kin from the Web Map group who are still in the default (white) group are moved to
-     * the chosen group. Kin the player put in any other group themselves are left alone.
+     * Existing kin from the Web Map group who are not in the chosen group are moved to it.
      */
     private void prepareSync() {
         List<String[]> rows = syncRows;
@@ -406,8 +430,8 @@ public class AutoKin {
         Set<String> pool = poolNames;
         for (BuddyWnd.Buddy b : wnd) {
             kin.add(b.name);
-            if ((grp != GROUP_KEEP) && (b.group == DEFAULT_GROUP) && pool.contains(b.name))
-                b.chgrp(grp);
+            if ((grp != GROUP_KEEP) && (b.group != grp) && pool.contains(b.name))
+                move(b, grp);
         }
         sendQueue.clear();
         for (String[] r : rows) {
@@ -452,6 +476,11 @@ public class AutoKin {
     }
 
     // ------------------------------------------------------------------ helpers
+
+    private static void move(BuddyWnd.Buddy b, int grp) {
+        System.out.println("[AutoKin] moving kin '" + b.name + "' from group " + b.group + " to " + grp);
+        b.chgrp(grp);
+    }
 
     private GameUI gui() {
         return wnd.getparent(GameUI.class);
