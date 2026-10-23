@@ -35,8 +35,14 @@ HnHMapperServer returns 404, which the client reports as "Web Map server has no 
 3. 15 s after login (option "Auto-kin my Web Map group on login"), or on the "Sync kin from Web Map"
    button, it GETs the list, skips its own character and anyone already in the kin list **by name**,
    and sends one `bypwd` every 0.25 s.
-4. `bypwd` is never acknowledged, so any `uimsg("add")` within 10 s of a send counts as success and,
-   with "Put kin added by Auto Kin in the green group" on, is moved to group 1.
+4. `bypwd` is never acknowledged, so any `uimsg("add")` within 10 s of a send counts as success and
+   is moved to the group chosen in "Kin group for my Web Map group" (pref `autoKinGroup`, a
+   `BuddyWnd.gc` index 1-7, or -1 = don't change).
+5. Every fetch keeps the group's character names (`poolNames`). A `uimsg("add")` at any time (also
+   outside our own sync: another member's sync kinned us) for a name in that list is moved to the
+   chosen group. An add for an unknown name triggers one name-list refetch (at most every 30 s), and
+   is moved if it turns up. Each sync also moves group members still in the default group 0; kin the
+   player moved to another group by hand are left alone.
 
 Name matching means kin shown under a nickname get their secret re-sent each sync; harmless, the
 game ignores `bypwd` for existing kin.
@@ -44,4 +50,5 @@ game ignores `bypwd` for existing kin.
 ## Prefs
 
 `autoKinShareSecret` (default off, master switch), `autoKinGenerateSecret` (on), `autoKinOnLogin`
-(on), `autoKinGreenGroup` (on).
+(on), `autoKinGroup` (default 1 = green; until set, the old `autoKinGreenGroup` checkbox decides:
+off -> -1 "Don't change").

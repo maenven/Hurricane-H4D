@@ -4843,7 +4843,7 @@ public class OptWnd extends Window {
 	public static CheckBox autoKinShareSecretCheckBox;
 	public static CheckBox autoKinGenerateSecretCheckBox;
 	public static CheckBox autoKinOnLoginCheckBox;
-	public static CheckBox autoKinGreenGroupCheckBox;
+	public static OldDropBox<Integer> autoKinGroupDropbox;
 
 
 
@@ -4908,12 +4908,39 @@ public class OptWnd extends Window {
 				}
 			}, prev.pos("bl").adds(0, 4));
 			autoKinOnLoginCheckBox.tooltip = autoKinOnLoginTooltip;
-			prev = add(autoKinGreenGroupCheckBox = new CheckBox("Put kin added by Auto Kin in the green group"){
-				{a = Utils.getprefb(AutoKin.PREF_GREEN, true);}
-				public void changed(boolean val) {
-					Utils.setprefb(AutoKin.PREF_GREEN, val);
+			prev = add(new Label("Kin group for my Web Map group:"), prev.pos("bl").adds(0, 6));
+			prev.tooltip = autoKinGroupTooltip;
+			add(autoKinGroupDropbox = new OldDropBox<Integer>(UI.scale(100), AutoKin.GROUP_CHOICES.length, UI.scale(17)) {
+				{
+					super.change(AutoKin.group());
 				}
-			}, prev.pos("bl").adds(0, 4));
+				@Override
+				protected Integer listitem(int i) {
+					return AutoKin.GROUP_CHOICES[i];
+				}
+				@Override
+				protected int listitems() {
+					return AutoKin.GROUP_CHOICES.length;
+				}
+				@Override
+				protected void drawitem(GOut g, Integer item, int i) {
+					int x = UI.scale(3);
+					if (item != AutoKin.GROUP_KEEP) {
+						int sq = g.sz().y - UI.scale(6);
+						g.chcolor(BuddyWnd.gcolor(item));
+						g.frect(Coord.of(x, UI.scale(3)), Coord.of(sq, sq));
+						g.chcolor();
+						x += sq + UI.scale(4);
+					}
+					g.aimage(Text.renderstroked(AutoKin.groupName(item)).tex(), Coord.of(x, g.sz().y / 2), 0.0, 0.5);
+				}
+				@Override
+				public void change(Integer item) {
+					super.change(item);
+					AutoKin.setGroup(item);
+				}
+			}, prev.pos("ur").adds(6, 0));
+			autoKinGroupDropbox.tooltip = autoKinGroupTooltip;
 
             prev = add(new Label("Cookbook Integration"), prev.pos("bl").adds(0, 26).x(110));
 			prev = add(new Label("Cookbook Endpoint:"), prev.pos("bl").adds(0, 16).x(0));
@@ -5727,6 +5754,8 @@ public class OptWnd extends Window {
 			"\n\n$col[185,185,185]{An existing secret is never replaced.}", UI.scale(300));
 	private static final Object autoKinOnLoginTooltip = RichText.render("Shortly after logging in, adds every Web Map group member who isn't your kin yet." +
 			"\n\n$col[185,185,185]{You can also do it any time with the \"Sync kin from Web Map\" button in Kith & Kin.}", UI.scale(300));
+	private static final Object autoKinGroupTooltip = RichText.render("The Kith & Kin group that kin from your Web Map group are put in: everyone Auto Kin adds, anyone in the group who adds you, and group members still in the default white group when you sync." +
+			"\n\n$col[185,185,185]{Kin you moved to another group yourself are left there. \"Don't change\" turns this off.}", UI.scale(320));
 	private static final Object uploadMapTilesTooltip = RichText.render("Enable this to upload your map tiles to your web map server.", UI.scale(300));
 	private static final Object sendLiveLocationTooltip = RichText.render("Enable this to show your current location on your web map server.", UI.scale(320));
 	private static final Object liveLocationNameTooltip = RichText.render("If you send your location to the server, your name will appear as whatever you set in this text entry + your current character name." +
