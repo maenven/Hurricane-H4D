@@ -3357,6 +3357,7 @@ public class OptWnd extends Window {
 	public static CheckBox togglePartyPermissionsOnLoginCheckBox;
 	public static CheckBox toggleItemStackingOnLoginCheckBox;
 	public static CheckBox autoSelect1stFlowerMenuCheckBox;
+	public static CheckBox vehicleAreaTransferCheckBox;
 	public static CheckBox alsoUseContainersWithRepeaterCheckBox;
 	public static CheckBox autoRepeatFlowerMenuCheckBox;
 	public static CheckBox autoReloadCuriositiesFromInventoryCheckBox;
@@ -3596,6 +3597,13 @@ public class OptWnd extends Window {
 			}, prev.pos("bl").adds(0, 12));
 			enableQueuedMovementCheckBox.tooltip = enableQueuedMovementTooltip;
 
+			prev = add(vehicleAreaTransferCheckBox = new CheckBox("Load/Unload Carts & Wagons from an Area (Ctrl+Right-Click)"){
+				{a = Utils.getprefb("vehicleAreaTransfer", true);}
+				public void changed(boolean val) {
+					Utils.setprefb("vehicleAreaTransfer", val);
+				}
+			}, prev.pos("bl").adds(0, 12).x(0));
+			vehicleAreaTransferCheckBox.tooltip = vehicleAreaTransferTooltip;
             prev = add(walkWithPathFinderCheckBox = new CheckBox("Walk with Pathfinder (Ctrl+Shift+Click)"){
                 {a = Utils.getprefb("walkWithPathfinder", false);}
                 public void set(boolean val) {
@@ -5612,6 +5620,13 @@ public class OptWnd extends Window {
 			"\n" +
 			"\n$col[218,163,0]{Action Button:} $col[185,185,185]{This setting can also be turned on/off using an action button from the menu grid (Custom Client Extras → Toggles).}", UI.scale(320));
 	private static final Object enableQueuedMovementTooltip = RichText.render("$col[218,163,0]{Action Button:} $col[185,185,185]{This setting can also be turned on/off using an action button from the menu grid (Custom Client Extras → Toggles).}", UI.scale(300));
+    private static final Object vehicleAreaTransferTooltip = RichText.render("Hold Ctrl and Right-Click a cart or a wagon (with nothing lifted) to get two choices:" +
+            "\n" +
+            "\n$col[218,163,0]{Load from area:} $col[185,185,185]{drag a rectangle over the objects you want loaded, pick which kind of object if there are several, and they get lifted into the vehicle one by one until it is full or the area is empty.}" +
+            "\n$col[218,163,0]{Unload into area:} $col[185,185,185]{drag a rectangle where the cargo should go, and it gets taken out and set down in free spots inside it.}" +
+            "\n" +
+            "\nRight-click cancels the area selection. Ctrl+Right-Click the vehicle again while it runs to stop it." +
+            "\nWith this off, Ctrl+Right-Click on carts and wagons behaves as before.", UI.scale(320));
     private static final Object walkWithPathfinderTooltip = RichText.render("You can use this to walk and avoid possible obstacles, for example, in your base. It's not perfect, and doesn't work with cliffs though." +
             "\n" +
             "\n$col[218,163,0]{Action Button:} $col[185,185,185]{This setting can also be turned on/off using an action button from the menu grid (Custom Client Extras → Toggles).}", UI.scale(300));

@@ -16,5 +16,6 @@ Small, single-topic files. Read only the ones relevant to the current task — d
 | [group-permission-extension.md](group-permission-extension.md) | Touching `BuddyWnd.GroupSelector`, Kin/Village/claim/Field-Cairn permission groups, or `haven.groups.*`. |
 | [portrait-performance.md](portrait-performance.md) | Lag/low FPS in big parties or fights, `Avaview` / Party widget / portraits, the "Disable 3D Portraits" option. |
 | [auto-kin.md](auto-kin.md) | Auto Kin: sharing hearth secrets through the Web Map server, the `/kinSecret(s)` contract, `AutoKin` / `BuddyWnd` hooks. |
+| [vehicle-area-transfer.md](vehicle-area-transfer.md) | Ctrl+Right-Click cart/wagon load/unload from an area: `VehicleAreaTransfer`, client-side `ClientMenu`, `MapView.selectAreaClientSide`. |
 
 Tools: [tools/New-MenuGridButton.ps1](tools/New-MenuGridButton.ps1) — generates a menu-grid `.res` file by splicing a name/tooltip/description into an existing button's icon, without needing the (unavailable) official resource editor.

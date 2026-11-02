@@ -106,3 +106,23 @@ add an entry here. Procedure: [upstream-merge-workflow.md](upstream-merge-workfl
   manual Clear holds for the session; secrets are never logged; HTTP stays off the UI thread.
 - **Superseded when:** upstream ships an equivalent shared-secret auto-kin.
 - **Detail:** [auto-kin.md](auto-kin.md).
+
+## 6. Cart/wagon load and unload from an area
+
+- **Behavior:** with "Load/Unload Carts & Wagons from an Area (Ctrl+Right-Click)" on (Options →
+  Advanced Settings → Gameplay Automation Settings, default **on**), Ctrl+Right-Click on a cart or wagon with
+  nothing lifted opens a small menu: *Load … from area* (drag a rectangle, pick the kind of object if
+  there are several, lift them in one by one) or *Unload … into area* (drag a rectangle, set the
+  cargo down in free spots). Ctrl+Right-Click the vehicle again while it runs to stop it.
+- **Why:** ported from the Nurgling2 client's Load/Unload vehicle context actions.
+- **Fork-owned:** `src/haven/automated/VehicleAreaTransfer.java`,
+  `src/haven/automated/helpers/ClientMenu.java`.
+- **Shared hooks:** `MapView` (`Click.hit` Ctrl+RMB hook before the right-click branch;
+  `Selector.clientCallback` + its `mmouseup`/right-click-cancel branches; `selectAreaClientSide`,
+  `cancelClientAreaSelect`, `isPlacingReady`); `GameUI` (`vehicleAreaTransferThread`); `OptWnd`
+  (`vehicleAreaTransferCheckBox` + tooltip before "Walk with Pathfinder").
+- **Invariants:** a client-started selection never sends `"sel"` to the server; Ctrl+RMB while
+  carrying an object or holding an item, or with the option off, falls through to the normal click;
+  objects already in the unload area are never moved; a failed store puts the object back where it was.
+- **Superseded when:** upstream ships an equivalent area load/unload for vehicles.
+- **Detail:** [vehicle-area-transfer.md](vehicle-area-transfer.md).

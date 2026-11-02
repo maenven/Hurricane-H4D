@@ -164,6 +164,7 @@ public class GameUI extends ConsoleHost implements Console.Directory, UI.Notice.
 	public Thread interactWithNearestObjectThread;
 	public Thread enterNearestVehicleThread;
 	public Thread wagonNearestLiftableThread;
+	public Thread vehicleAreaTransferThread;
 	public Thread cloverScriptThread;
 	public Thread coracleScriptThread;
 	public Thread skisScriptThread;
