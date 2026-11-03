@@ -27,6 +27,7 @@
 package haven;
 
 import haven.automated.AutoRepeatFlowerMenuScript;
+import haven.automated.CuttingToolAutoEquip;
 
 import java.awt.Color;
 import java.awt.Font;
@@ -271,6 +272,8 @@ public class FlowerMenu extends Widget {
     }
 
     public boolean mousedown(MouseDownEvent ev) {
+	if(equippingTool)
+	    return(true);
 	if(!anims.isEmpty())
 	    return(true);
 	if(!ev.propagate(this))
@@ -295,6 +298,8 @@ public class FlowerMenu extends Widget {
     }
 
     public boolean keydown(KeyDownEvent ev) {
+	if(equippingTool)
+	    return(true);
 	if((ev.c >= '0') && (ev.c <= '9')) {
 	    int opt = (ev.c == '0') ? 9 : (ev.c - '1');
 	    if(opt < opts.length) {
@@ -314,11 +319,32 @@ public class FlowerMenu extends Widget {
 	if(option == null) {
 	    wdgmsg("cl", -1);
 	} else {
-		if(AutoRepeatFlowerMenuScript.option != null){
-			AutoRepeatFlowerMenuScript.option = option.name;
+		if(!equippingTool && CuttingToolAutoEquip.wantsTool(option.name) && CuttingToolAutoEquip.needsSwap(ui.gui)) {
+			// H4D: put the best cutting tool in hand first, then send the choice.
+			equippingTool = true;
+			final GameUI gui = ui.gui;
+			final int modflags = ui.modflags();
+			Thread t = new Thread(() -> {
+				CuttingToolAutoEquip.equipBest(gui);
+				sendChoice(option, modflags);
+			}, "CuttingToolAutoEquip");
+			t.setDaemon(true);
+			t.start();
+			return;
 		}
-	    wdgmsg("cl", option.num, ui.modflags());
+		sendChoice(option, ui.modflags());
 	}
+    }
+
+    private boolean equippingTool = false;
+
+    private void sendChoice(Petal option, int modflags) {
+	if(ui == null || parent == null)
+	    return;
+	if(AutoRepeatFlowerMenuScript.option != null){
+		AutoRepeatFlowerMenuScript.option = option.name;
+	}
+	wdgmsg("cl", option.num, modflags);
     }
 
 	public static void setNextSelection(String name) {

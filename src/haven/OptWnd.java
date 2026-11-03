@@ -3358,6 +3358,7 @@ public class OptWnd extends Window {
 	public static CheckBox toggleItemStackingOnLoginCheckBox;
 	public static CheckBox autoSelect1stFlowerMenuCheckBox;
 	public static CheckBox vehicleAreaTransferCheckBox;
+	public static CheckBox autoEquipCuttingToolCheckBox;
 	public static CheckBox alsoUseContainersWithRepeaterCheckBox;
 	public static CheckBox autoRepeatFlowerMenuCheckBox;
 	public static CheckBox autoReloadCuriositiesFromInventoryCheckBox;
@@ -3616,6 +3617,13 @@ public class OptWnd extends Window {
 				}
 			}, prev.pos("bl").adds(0, 12).x(0));
 			vehicleAreaTransferCheckBox.tooltip = vehicleAreaTransferTooltip;
+			prev = add(autoEquipCuttingToolCheckBox = new CheckBox("Auto-Equip Best Cutting Tool (Butcher / Split Blocks)"){
+				{a = Utils.getprefb("autoEquipCuttingTool", true);}
+				public void changed(boolean val) {
+					Utils.setprefb("autoEquipCuttingTool", val);
+				}
+			}, prev.pos("bl").adds(0, 2));
+			autoEquipCuttingToolCheckBox.tooltip = autoEquipCuttingToolTooltip;
             prev = add(walkWithPathFinderCheckBox = new CheckBox("Walk with Pathfinder (Ctrl+Shift+Click)"){
                 {a = Utils.getprefb("walkWithPathfinder", false);}
                 public void set(boolean val) {
@@ -5642,6 +5650,10 @@ public class OptWnd extends Window {
             "\n" +
             "\nRight-click cancels the area selection. Ctrl+Right-Click the vehicle again while it runs to stop it." +
             "\nWith this off, Ctrl+Right-Click on carts and wagons behaves as before.", UI.scale(320));
+    private static final Object autoEquipCuttingToolTooltip = RichText.render("When you choose $col[218,163,0]{Butcher} on an animal, or $col[218,163,0]{Split} on a block of wood, your highest quality cutting tool is put in your hand first." +
+            "\n" +
+            "\nCutting tools: axes (Stone, Metal, Woodsman's, Tinker's Throwing), knives (Flint, Ceramic), Obsidian Dagger, Butcher's Cleaver and swords (Bronze, Fyrdsman's, Hirdsman's). They're taken from your inventory or belt, and the item that was in that hand goes where the tool was." +
+            "\nNothing changes when the best tool is already in your hand, or when you hold an item on your cursor.", UI.scale(320));
     private static final Object walkWithPathfinderTooltip = RichText.render("You can use this to walk and avoid possible obstacles, for example, in your base. It's not perfect, and doesn't work with cliffs though." +
             "\n" +
             "\n$col[218,163,0]{Action Button:} $col[185,185,185]{This setting can also be turned on/off using an action button from the menu grid (Custom Client Extras → Toggles).}", UI.scale(300));
