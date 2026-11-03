@@ -171,7 +171,7 @@ add an entry here. Procedure: [upstream-merge-workflow.md](upstream-merge-workfl
 - **Invariants:** with the option off (or no crystal) every message passes untouched.
 - **Detail:** [rock-crystal-guard.md](rock-crystal-guard.md).
 
-## 9. Shear sheep and goats in an area
+## 10. Shear sheep and goats in an area
 
 - **Behavior:** menu-grid button *Shear Animals in Area* (Custom Client Extras → Other Scripts &
   Tools). Press it, drag a rectangle over the animals; the best shears carried go into a hand (the
@@ -184,7 +184,7 @@ add an entry here. Procedure: [upstream-merge-workflow.md](upstream-merge-workfl
   `MapView.selectAreaClientSide` from §6.
 - **Detail:** [area-shearer.md](area-shearer.md).
 
-## 9. Milk animals in an area into barrels
+## 11. Milk animals in an area into barrels
 
 - **Behavior:** menu-grid button *Milk Animals in Area* (Custom Client Extras → Other Scripts &
   Tools, milk-bucket icon). Press it, drag a rectangle over the cows/goats/sheep, then one over the

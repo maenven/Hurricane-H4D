@@ -810,7 +810,6 @@ public class MenuGrid extends Widget implements KeyBinding.Bindable {
 		makeLocal("customclient/menugrid/OtherScriptsAndTools/Add5WoodBlocksScript");
 		makeLocal("customclient/menugrid/OtherScriptsAndTools/LightFiresInArea");
 		makeLocal("customclient/menugrid/OtherScriptsAndTools/ShearAnimalsInArea");
-
 		makeLocal("customclient/menugrid/OtherScriptsAndTools/MilkAnimalsInArea");
 
 		// Category: Quick Switch From Belt
@@ -1163,7 +1162,6 @@ public class MenuGrid extends Widget implements KeyBinding.Bindable {
 				haven.automated.AreaFireLighter.menuButton(gui);
 			} else if (ad[2].equals("ShearAnimalsInArea")) {
 				haven.automated.AreaShearer.menuButton(gui);
-
 			} else if (ad[2].equals("MilkAnimalsInArea")) {
 				haven.automated.AreaMilker.menuButton(gui);
 			}
