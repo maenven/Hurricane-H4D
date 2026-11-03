@@ -3605,7 +3605,7 @@ public class OptWnd extends Window {
 				}
 			}, prev.pos("bl").adds(0, 12).x(0));
 			vehicleAreaTransferCheckBox.tooltip = vehicleAreaTransferTooltip;
-			prev = add(autoEquipCuttingToolCheckBox = new CheckBox("Auto-Equip Best Cutting Tool (Butcher / Split Blocks)"){
+			prev = add(autoEquipCuttingToolCheckBox = new CheckBox("Auto-Equip Best Cutting Tool (Butcher / Split / Chop)"){
 				{a = Utils.getprefb("autoEquipCuttingTool", true);}
 				public void changed(boolean val) {
 					Utils.setprefb("autoEquipCuttingTool", val);
@@ -5638,6 +5638,8 @@ public class OptWnd extends Window {
     private static final Object autoEquipCuttingToolTooltip = RichText.render("When you choose $col[218,163,0]{Butcher} on an animal, or $col[218,163,0]{Split} on a block of wood, your highest quality cutting tool is put in your hand first." +
             "\n" +
             "\nCutting tools: axes (Stone, Metal, Woodsman's, Tinker's Throwing), knives (Flint, Ceramic), Obsidian Dagger, Butcher's Cleaver and swords (Bronze, Fyrdsman's, Hirdsman's). They're taken from your inventory or belt, and the item that was in that hand goes where the tool was." +
+            "\n$col[218,163,0]{Chop} (trees, bushes) and $col[218,163,0]{Chop into blocks} (logs) use axes only, by type first: Stone Axe < Metal Axe < Woodsman's Axe, then quality." +
+            "\nA worse tool of the same kind in your hand gets swapped out, so you don't end up holding two." +
             "\nNothing changes when the best tool is already in your hand, or when you hold an item on your cursor.", UI.scale(320));
     private static final Object walkWithPathfinderTooltip = RichText.render("You can use this to walk and avoid possible obstacles, for example, in your base. It's not perfect, and doesn't work with cliffs though." +
             "\n" +
