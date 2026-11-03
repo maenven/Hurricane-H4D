@@ -697,6 +697,8 @@ public class UI {
 	    new Warning("wdgmsg sender (%s) is not in rwidgets, message is %s", sender.getClass().getName(), msg).issue();
 	    return;
 	}
+	if(RockCrystalGuard.blocks(this, sender, msg, args)) // H4D: doc/H4D-features/rock-crystal-guard.md
+	    return;
 	if(rcvr != null)
 	    rcvr.rcvmsg(id, msg, args);
 //	System.out.println("id: " + id + ", msg: " + msg + ", args: " + Arrays.toString(args) + " - " + getwidget(id).getClass().getName()); // ND: Use this to print widget messages

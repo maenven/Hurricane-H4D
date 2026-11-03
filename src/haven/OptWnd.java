@@ -3367,6 +3367,7 @@ public class OptWnd extends Window {
 	public static CheckBox autoDropTicksCheckBox;
 	public static CheckBox autoPeaceAnimalsWhenCombatStartsCheckBox;
 	public static CheckBox preventUsingRawHideWhenRidingCheckBox;
+	public static CheckBox blockStoneActionsWithRockCrystalCheckBox;
 	public static CheckBox autoDrinkingCheckBox;
 	public static TextEntry autoDrinkingThresholdTextEntry;
 	public static CheckBox enableQueuedMovementCheckBox;
@@ -3561,6 +3562,17 @@ public class OptWnd extends Window {
 				}
 			}, prev.pos("bl").adds(0, 12));
 			preventUsingRawHideWhenRidingCheckBox.tooltip = preventUsingRawHideWhenRidingTooltip;
+			prev = add(blockStoneActionsWithRockCrystalCheckBox = new CheckBox("Block Stone Actions while carrying Rock Crystal"){
+				{a = Utils.getprefb("blockStoneActionsWithRockCrystal", false);}
+				public void set(boolean val) {
+					Utils.setprefb("blockStoneActionsWithRockCrystal", val);
+					a = val;
+					if (ui != null && ui.gui != null) {
+						ui.gui.optionInfoMsg("Block Stone Actions while carrying Rock Crystal is now " + (val ? "ENABLED" : "DISABLED") + ".", (val ? msgGreen : msgRed), Audio.resclip(val ? Toggle.sfxon : Toggle.sfxoff));
+					}
+				}
+			}, prev.pos("bl").adds(0, 12));
+			blockStoneActionsWithRockCrystalCheckBox.tooltip = blockStoneActionsWithRockCrystalTooltip;
 			prev = add(autoDrinkingCheckBox = new CheckBox("Auto-Drink Water below threshold:"){
 				{a = Utils.getprefb("autoDrinkTeaOrWater", false);}
 				public void set(boolean val) {
@@ -5615,6 +5627,9 @@ public class OptWnd extends Window {
 	private static final Object autoPeaceAnimalsWhenCombatStartsTooltip = RichText.render("This will automatically set your status to 'Peace' when combat is initiated with a new target (animals only). " +
 			"\nToggling this on, while in combat, will also autopeace all animals you are currently fighting." +
 			"\n\n$col[218,163,0]{Action Button:} $col[185,185,185]{This setting can also be turned on/off using an action button from the menu grid (Custom Client Extras → Toggles).}", UI.scale(320));
+	private static final Object blockStoneActionsWithRockCrystalTooltip = RichText.render("While a Rock Crystal is in your inventory, this blocks actions that can use up stone from your inventory, so the crystal isn't used by accident:" +
+			"\n$col[218,163,0]{Crafting} a recipe with a stone ingredient, pressing $col[218,163,0]{Build} on a construction site, and starting the $col[218,163,0]{Landscape} tool (paving)." +
+			"\n\nYou'll see \"Action denied, please remove Rock Crystal to continue your actions.\" until the crystal is out of your inventory.", UI.scale(300));
 	private static final Object preventUsingRawHideWhenRidingTooltip = RichText.render("This will prevent you from using Raw Hide while riding a Horse, and only allow using it when you're not mounted.", UI.scale(300));
 	private static final Object autoDrinkingTooltip = RichText.render("When your Stamina Bar goes below the set threshold, try to drink Water. If the threshold box is empty, it defaults to 75%." +
 			"\n" +

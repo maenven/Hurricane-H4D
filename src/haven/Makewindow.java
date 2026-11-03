@@ -203,7 +203,7 @@ public class Makewindow extends Widget {
 	relabel();
     }
 
-    private void stopBatch(String msg) {
+    void stopBatch(String msg) {
 	if(phase == IDLE)
 	    return;
 	phase = IDLE;

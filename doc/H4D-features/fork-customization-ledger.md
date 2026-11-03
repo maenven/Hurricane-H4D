@@ -156,3 +156,17 @@ add an entry here. Procedure: [upstream-merge-workflow.md](upstream-merge-workfl
   `MapView.selectAreaClientSide` / `isPlacingReady` from §6.
 - **Invariants:** the candelabrum/torch is returned even when the run is stopped.
 - **Detail:** [area-fire-lighter.md](area-fire-lighter.md).
+
+## 9. Block stone actions while carrying Rock Crystal
+
+- **Behavior:** option *Block Stone Actions while carrying Rock Crystal* (Options → Gameplay
+  Automation, off by default). While on and a Rock Crystal is in the main inventory, crafting a
+  recipe with a stone input, pressing **Build** on a construction site and starting the
+  **Landscape** tool are refused client-side with "Action denied, please remove Rock Crystal to
+  continue your actions."
+- **Why:** Ian asked for it (2026-11-03) so a crystal is never used up as stone by accident.
+- **Fork-owned:** `src/haven/RockCrystalGuard.java`.
+- **Shared hooks:** one line at the top of `UI.wdgmsg(Widget, String, Object...)`; `OptWnd`
+  checkbox + tooltip; `Makewindow.stopBatch` widened from private to package-private.
+- **Invariants:** with the option off (or no crystal) every message passes untouched.
+- **Detail:** [rock-crystal-guard.md](rock-crystal-guard.md).

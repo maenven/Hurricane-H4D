@@ -19,5 +19,6 @@ Small, single-topic files. Read only the ones relevant to the current task — d
 | [vehicle-area-transfer.md](vehicle-area-transfer.md) | Ctrl+Right-Click cart/wagon load/unload from an area: `VehicleAreaTransfer`, client-side `ClientMenu`, `MapView.selectAreaClientSide`. |
 | [area-fire-lighter.md](area-fire-lighter.md) | *Light Fires in Area* menu button (candelabrum/torchpost → light kilns/ovens/smoke sheds/fireplaces in an area): `AreaFireLighter`, fire bits per workstation. |
 | [craft-quantity.md](craft-quantity.md) | The crafting window's amount box / **Craft #** button (craft N items in a row) in `Makewindow`. |
+| [rock-crystal-guard.md](rock-crystal-guard.md) | The *Block Stone Actions while carrying Rock Crystal* option: `RockCrystalGuard`, the `UI.wdgmsg` hook. |
 
 Tools: [tools/New-MenuGridButton.ps1](tools/New-MenuGridButton.ps1) — generates a menu-grid `.res` file by splicing a name/tooltip/description into an existing button's icon, without needing the (unavailable) official resource editor.
