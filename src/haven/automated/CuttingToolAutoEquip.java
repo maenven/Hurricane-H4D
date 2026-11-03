@@ -198,18 +198,23 @@ public class CuttingToolAutoEquip {
 			GItem tool = best.witem.item;
 			boolean handWasFull = eq.slots[slot] != null;
 
+			// The server re-creates item widgets when they move (inventory -> cursor -> hand), so we can't
+			// follow the tool by widget identity; we watch the cursor and the hand slot instead, the same
+			// take / drop-in-hand / drop-back sequence the "Equip from Belt" buttons use.
+			WItem before = eq.slots[slot];
 			tool.wdgmsg("take", Coord.z);
-			if (!waitFor(() -> gui.vhand != null && gui.vhand.item == tool)) {
+			if (!waitFor(() -> gui.vhand != null)) {
 				gui.ui.error("Auto-equip cutting tool: couldn't pick up the tool.");
 				return;
 			}
 			eq.wdgmsg("drop", slot);
-			if (!waitFor(() -> eq.slots[slot] != null && eq.slots[slot].item == tool)) {
+			if (!waitFor(() -> eq.slots[slot] != null && eq.slots[slot] != before && isSharpTool(eq.slots[slot].item)
+					&& (handWasFull ? (gui.vhand != null) : (gui.vhand == null)))) {
 				gui.ui.error("Auto-equip cutting tool: couldn't put the tool in your hand.");
 				return;
 			}
 			// Whatever was in that hand is now on the cursor: put it where the tool was.
-			if (handWasFull && waitFor(() -> gui.vhand != null) && gui.vhand != null) {
+			if (handWasFull && gui.vhand != null) {
 				from.wdgmsg("drop", origin);
 				if (!waitFor(() -> gui.vhand == null) && gui.vhand != null) {
 					// Didn't fit there (e.g. a bigger item): try any free spot in the main inventory.
