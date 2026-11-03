@@ -319,13 +319,14 @@ public class FlowerMenu extends Widget {
 	if(option == null) {
 	    wdgmsg("cl", -1);
 	} else {
-		if(!equippingTool && CuttingToolAutoEquip.wantsTool(option.name) && CuttingToolAutoEquip.needsSwap(ui.gui)) {
+		final CuttingToolAutoEquip.Policy toolPolicy = equippingTool ? null : CuttingToolAutoEquip.policyFor(option.name);
+		if(toolPolicy != null && CuttingToolAutoEquip.needsSwap(ui.gui, toolPolicy)) {
 			// H4D: put the best cutting tool in hand first, then send the choice.
 			equippingTool = true;
 			final GameUI gui = ui.gui;
 			final int modflags = ui.modflags();
 			Thread t = new Thread(() -> {
-				CuttingToolAutoEquip.equipBest(gui);
+				CuttingToolAutoEquip.equipBest(gui, toolPolicy);
 				sendChoice(option, modflags);
 			}, "CuttingToolAutoEquip");
 			t.setDaemon(true);

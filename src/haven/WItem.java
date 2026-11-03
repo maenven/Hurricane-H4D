@@ -303,14 +303,14 @@ public class WItem extends Widget implements DTarget {
 		}
 		if (ui.modctrl && OptWnd.autoSelect1stFlowerMenuCheckBox.a && !ui.modshift && !ui.modmeta
 				&& CuttingToolAutoEquip.enabled() && CuttingToolAutoEquip.isBlock(CuttingToolAutoEquip.lastRightClickedItemName)
-				&& CuttingToolAutoEquip.needsSwap(ui.gui)) {
+				&& CuttingToolAutoEquip.needsSwap(ui.gui, CuttingToolAutoEquip.Policy.SHARP)) {
 			// H4D: Ctrl+Right-Click quick-split of a block: equip the best cutting tool first, then split.
 			final GameUI gui = ui.gui;
 			final GItem block = item;
 			final Coord c = ev.c;
 			final int modflags = ui.modflags();
 			Thread t = new Thread(() -> {
-				CuttingToolAutoEquip.equipBest(gui);
+				CuttingToolAutoEquip.equipBest(gui, CuttingToolAutoEquip.Policy.SHARP);
 				FlowerMenu.setNextSelection("Split");
 				block.wdgmsg("iact", c, modflags);
 			}, "CuttingToolAutoEquip");
