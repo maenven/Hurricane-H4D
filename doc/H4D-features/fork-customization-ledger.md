@@ -126,3 +126,19 @@ add an entry here. Procedure: [upstream-merge-workflow.md](upstream-merge-workfl
   objects already in the unload area are never moved; a failed store puts the object back where it was.
 - **Superseded when:** upstream ships an equivalent area load/unload for vehicles.
 - **Detail:** [vehicle-area-transfer.md](vehicle-area-transfer.md).
+
+## 7. Light fires in an area with a candelabrum or torchpost
+
+- **Behavior:** with "Light Fires in an Area with a Candelabrum/Torchpost (Ctrl+Right-Click)" on
+  (Options → Advanced Settings → Gameplay Automation Settings, default **on**), Ctrl+Right-Click on a
+  lit candelabrum or a torchpost holding a lit torch → *Light fires in area* → drag a rectangle; every
+  unlit kiln, smoke shed, oven, fireplace (and the other fire workstations listed in the detail file)
+  in it gets lit, then the source goes back where it was. Ctrl+Right-Click the source again to stop.
+- **Why:** ported from the Nurgling2 client's unified lighter (`LightObject`).
+- **Fork-owned:** `src/haven/automated/AreaFireLighter.java`.
+- **Shared hooks:** `MapView` (`Click.hit` Ctrl+RMB hook right after the vehicle one; reuses
+  `selectAreaClientSide` / `isPlacingReady` from §6); `OptWnd` (`areaFireLighterCheckBox` + tooltip
+  under the vehicle option).
+- **Invariants:** a torchpost without a torch, or the option off, falls through to the normal click;
+  the candelabrum/torch is returned even when the run is stopped.
+- **Detail:** [area-fire-lighter.md](area-fire-lighter.md).

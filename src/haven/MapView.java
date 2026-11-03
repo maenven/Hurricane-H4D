@@ -40,6 +40,7 @@ import java.util.stream.Collectors;
 import haven.automated.MiningSafetyAssistant;
 import haven.automated.helpers.AreaSelectCallback;
 import haven.automated.VehicleAreaTransfer;
+import haven.automated.AreaFireLighter;
 import haven.automated.pathfinder.PFListener;
 import haven.automated.pathfinder.Pathfinder;
 import haven.render.*;
@@ -2433,6 +2434,10 @@ public class MapView extends PView implements DTarget, Console.Directory, PFList
 				}
 				// H4D: Ctrl+Right-Click on a cart or wagon opens the load/unload-from-area menu.
 				if (clickb == 3 && ui.modctrl && !ui.modshift && !ui.modmeta && VehicleAreaTransfer.ctrlRightClick(ui.gui, gob)) {
+					return;
+				}
+				// H4D: Ctrl+Right-Click on a lit candelabrum or torchpost lights the fires in a dragged-out area.
+				if (clickb == 3 && ui.modctrl && !ui.modshift && !ui.modmeta && AreaFireLighter.ctrlRightClick(ui.gui, gob)) {
 					return;
 				}
 				if (clickb == 3) { // Right Click
