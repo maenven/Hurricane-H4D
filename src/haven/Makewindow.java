@@ -147,10 +147,149 @@ public class Makewindow extends Widget {
 	int inputW = add(new Label("Input:"), new Coord(0, UI.scale(8))).sz.x;
 	int resultW = add(new Label("Result:"), new Coord(0, outy + UI.scale(8))).sz.x;
 	xoff = Math.max(inputW, resultW) + UI.scale(10);
-	add(new Button(UI.scale(85), "Craft"), UI.scale(new Coord(265, 75))).action(() -> wdgmsg("make", 0)).setgkey(kb_make);
-	add(new Button(UI.scale(85), "Craft All"), UI.scale(new Coord(360, 75))).action(() -> wdgmsg("make", 1)).setgkey(kb_makeall);
+	// H4D: craft a chosen number of items ([amount] [Craft #]), see doc/H4D-features/craft-quantity.md
+	countBtn = add(new Button(UI.scale(75), countLabel()), UI.scale(new Coord(230, 75))).action(this::toggleBatch);
+	amount = add(new CountEntry(UI.scale(35), Integer.toString(savedAmount())), Coord.of(UI.scale(190), countBtn.c.y + ((countBtn.sz.y - TextEntry.mext.sz().y) / 2)));
+	add(new Button(UI.scale(70), "Craft"), UI.scale(new Coord(310, 75))).action(() -> {stopBatch(null); wdgmsg("make", 0);}).setgkey(kb_make);
+	add(new Button(UI.scale(70), "Craft All"), UI.scale(new Coord(385, 75))).action(() -> {stopBatch(null); wdgmsg("make", 1);}).setgkey(kb_makeall);
 	pack();
 	this.rcpnm = rcpnm;
+    }
+
+    /* H4D: craft quantity. The server only offers "make one" (make 0) and "make all" (make 1),
+     * so a batch sends make 0, waits for the craft's progress bar to appear and finish, and
+     * repeats until the chosen number is done (same approach as Ender's client). */
+    private static final String AMOUNT_PREF = "makewnd-craftcount";
+    private static final int IDLE = 0, SEND = 1, WAIT_START = 2, WAIT_END = 3, PAUSE = 4;
+    private static final double START_TIMEOUT = 2.0, PAUSE_TIME = 0.25;
+    private CountEntry amount;
+    private Button countBtn;
+    private int phase = IDLE, total = 0, done = 0;
+    private double ptime = 0;
+
+    private static int savedAmount() {
+	return(Math.max(1, Utils.getprefi(AMOUNT_PREF, 1)));
+    }
+
+    private String countLabel() {
+	if(phase == IDLE)
+	    return("Craft #");
+	return(String.format("Stop %d/%d", done, total));
+    }
+
+    private void relabel() {
+	if(countBtn != null)
+	    countBtn.change(countLabel());
+    }
+
+    private void toggleBatch() {
+	if(phase != IDLE)
+	    stopBatch(String.format("Crafting stopped: %d of %d made.", done, total));
+	else
+	    startBatch();
+    }
+
+    private void startBatch() {
+	int n = amount.value();
+	if(n <= 0) {
+	    ui.error("Enter how many to craft.");
+	    return;
+	}
+	Utils.setprefi(AMOUNT_PREF, n);
+	total = n;
+	done = 0;
+	phase = SEND;
+	ptime = 0;
+	relabel();
+    }
+
+    private void stopBatch(String msg) {
+	if(phase == IDLE)
+	    return;
+	phase = IDLE;
+	relabel();
+	if((msg != null) && (ui != null))
+	    ui.msg(msg);
+    }
+
+    public void tick(double dt) {
+	super.tick(dt);
+	if(phase == IDLE)
+	    return;
+	GameUI gui = getparent(GameUI.class);
+	if(gui == null) {
+	    stopBatch(null);
+	    return;
+	}
+	ptime += dt;
+	switch(phase) {
+	case SEND:
+	    wdgmsg("make", 0);
+	    phase = WAIT_START;
+	    ptime = 0;
+	    break;
+	case WAIT_START:
+	    if(gui.prog != null) {
+		phase = WAIT_END;
+		ptime = 0;
+	    } else if(ptime > START_TIMEOUT) {
+		/* Nothing started: out of materials, energy or space, or the craft was refused. */
+		stopBatch(String.format("Crafting stopped: %d of %d made (could not start the next one).", done, total));
+	    }
+	    break;
+	case WAIT_END:
+	    if(gui.prog == null) {
+		done++;
+		if(done >= total) {
+		    stopBatch(String.format("Crafted %d of %d.", done, total));
+		} else {
+		    phase = PAUSE;
+		    ptime = 0;
+		    relabel();
+		}
+	    }
+	    break;
+	case PAUSE:
+	    if(ptime >= PAUSE_TIME)
+		phase = SEND;
+	    break;
+	}
+    }
+
+    /* Digits only; Enter starts the batch. */
+    private class CountEntry extends TextEntry {
+	private final Set<Integer> allowed = new HashSet<>(Arrays.asList(
+	    java.awt.event.KeyEvent.VK_LEFT, java.awt.event.KeyEvent.VK_RIGHT, java.awt.event.KeyEvent.VK_HOME, java.awt.event.KeyEvent.VK_END,
+	    java.awt.event.KeyEvent.VK_ENTER, java.awt.event.KeyEvent.VK_BACK_SPACE, java.awt.event.KeyEvent.VK_DELETE));
+
+	CountEntry(int w, String deftext) {
+	    super(w, deftext);
+	    /* Never take focus on its own: a plain Enter must keep meaning "Craft" (one). */
+	    autofocus = false;
+	}
+
+	public boolean keydown(KeyDownEvent ev) {
+	    char ch = ev.awt.getKeyChar();
+	    if(((ch >= '0') && (ch <= '9')) || allowed.contains(ev.awt.getKeyCode())) {
+		if(Character.isDigit(ch) && (text().length() >= 4) && (buf.mark() < 0))
+		    return(true);
+		return(super.keydown(ev));
+	    }
+	    return(false);
+	}
+
+	public void done(ReadLine buf) {
+	    if(phase == IDLE)
+		startBatch();
+	}
+
+	int value() {
+	    try {
+		return(Integer.parseInt(text().trim()));
+	    } catch(NumberFormatException e) {
+		return(-1);
+	    }
+	}
     }
 
     private Spec parsespec(Object[] desc) {
