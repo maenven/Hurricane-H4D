@@ -1671,9 +1671,11 @@ public class GameUI extends ConsoleHost implements Console.Directory, UI.Notice.
     public void uimsg(String msg, Object... args) {
 	if(msg == "err") {
 	    String err = (String)args[0];
+	    ui.noteServerError(err); // H4D
 	    ui.error(err);
 	} else if(msg == "msg") {
 	    String text = (String)args[0];
+	    ui.noteServerInfo(text); // H4D
 	    ui.msg(text);
 	} else if(msg == "prog") {
 	    if(args.length > 0) {

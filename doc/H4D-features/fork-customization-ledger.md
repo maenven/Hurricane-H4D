@@ -156,3 +156,20 @@ add an entry here. Procedure: [upstream-merge-workflow.md](upstream-merge-workfl
   `MapView.selectAreaClientSide` / `isPlacingReady` from §6.
 - **Invariants:** the candelabrum/torch is returned even when the run is stopped.
 - **Detail:** [area-fire-lighter.md](area-fire-lighter.md).
+
+## 9. Milk animals in an area into barrels
+
+- **Behavior:** menu-grid button *Milk Animals in Area* (Custom Client Extras → Other Scripts &
+  Tools, milk-bucket icon). Press it, drag a rectangle over the cows/goats/sheep, then one over the
+  empty barrels. The character lifts the nearest empty barrel, Shift+Right-Clicks each animal with
+  it, sets the barrel back where it stood when the server says it's full, and takes the next empty
+  barrel from the same area. One species per barrel. Press the button again to stop.
+- **Why:** Ian's request; mechanics from Nurgling2's `MilkAnimalsAction`.
+- **Fork-owned:** `src/haven/automated/AreaMilker.java`,
+  `res/customclient/menugrid/OtherScriptsAndTools/MilkAnimalsInArea.res`.
+- **Shared hooks:** `MenuGrid` (one `makeLocal` line, one `useCustom` branch); `UI` gained
+  `lastServerError/Info/Sfx` + counters, fed by one-line `// H4D` calls in `GameUI.uimsg` ("err",
+  "msg") and `RootWidget.uimsg` ("err", "msg", "sfx") — re-add them if an upstream merge rewrites
+  those branches.
+- **Invariants:** the carried barrel is set down even when the run is stopped.
+- **Detail:** [area-milker.md](area-milker.md).
