@@ -212,3 +212,18 @@ add an entry here. Procedure: [upstream-merge-workflow.md](upstream-merge-workfl
   top of the list so the server resource's layout never moves) and `Polity.MemberListControls`;
   `SSearchBox.refilter()` (re-runs the search without selecting a member).
 - **Detail:** [village-member-sort.md](village-member-sort.md).
+
+## 13. Auto re-aggro animals that leave combat (Ender/Kami style)
+
+- **Behavior:** checkbox *Auto Re-aggro Animals that leave Combat* in Options → Gameplay/combat
+  settings, right under *Auto-Peace Animals when Combat Starts* (pref `autoReaggroAnimals`, off by
+  default). When any combat relation is removed (animal fled, or ran off after being peaced), the
+  client starts combat with it again if it is a `gfx/kritter/` gob, not knocked out, still loaded
+  and within 200 world units (~18 tiles) — the same rules as `Actions.reAggroKritter` in Ender's
+  and Kami's clients (`ui.combat.reaggro`). Applies to every relation, not only the current target;
+  never to players.
+- **Why:** Ian's request — Hurricane's own re-aggro is a per-target toggle that only fires for the
+  current target.
+- **Shared hooks:** `Fightview.uimsg("del")` (calls `reAggroAnimal`, skipped when the upstream
+  per-target `AutoGiveButton` path already re-aggroed the same gob) and `OptWnd` (checkbox +
+  tooltip). The upstream per-target toggle and its hotkey are unchanged.

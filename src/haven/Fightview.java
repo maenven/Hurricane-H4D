@@ -381,6 +381,34 @@ public class Fightview extends Widget {
 	}
     }
 
+    /* Ender/Kami-style re-aggro: when any animal drops out of combat with us (fled, or we
+     * peaced it and it ran off), start combat with it again, as long as it is still close,
+     * not knocked out and is a critter (never players). Paired with auto-peace this keeps
+     * fleeing animals in combat without having to mark each one. */
+    public static final double REAGGRO_MAX_DIST = 200; /* world units, same as Ender/Kami (~18 tiles) */
+
+    private void reAggroAnimal(long gobid) {
+	try {
+	    if(ui == null || ui.gui == null || ui.gui.map == null)
+		return;
+	    Gob player = ui.gui.map.player();
+	    Gob target = ui.sess.glob.oc.getgob(gobid);
+	    if(player == null || target == null)
+		return;
+	    if(Boolean.TRUE.equals(target.knocked))
+		return;
+	    Resource res = target.getres();
+	    if(res == null || !res.name.startsWith("gfx/kritter/"))
+		return;
+	    if(player.rc.dist(target.rc) > REAGGRO_MAX_DIST)
+		return;
+	    Utils.aggro(ui.gui, gobid);
+	} catch(Loading ignored) {
+	} catch(Exception e) {
+	    e.printStackTrace();
+	}
+    }
+
     public static class Notfound extends RuntimeException {
         public final long id;
 
@@ -411,16 +439,21 @@ public class Fightview extends Widget {
             Relation rel = getrel(Utils.uiv(args[0]));
 	    rel.remove();
             lsrel.remove(rel);
+	    boolean reaggroed = false;
 	    if(rel == current) {
             setcur(null);
             if (rel.autogive != null && rel.autogive.state == 1 && ui != null && ui.gui != null) {
                 autogivegobid = rel.gobid;
                 if (!Utils.aggro(ui.gui, rel.gobid)) {
                     autogivegobid = -1;
+                } else {
+                    reaggroed = true;
                 }
             }
         }
 	    updrel();
+	    if (!reaggroed && OptWnd.autoReaggroAnimalsCheckBox != null && OptWnd.autoReaggroAnimalsCheckBox.a)
+		reAggroAnimal(rel.gobid);
             return;
         } else if(msg == "upd") {
             Relation rel = getrel(Utils.uiv(args[0]));
