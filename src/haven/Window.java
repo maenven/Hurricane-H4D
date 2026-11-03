@@ -35,6 +35,8 @@ import haven.render.*;
 import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.regex.Matcher;
 
 import static haven.PUtils.*;
@@ -106,6 +108,135 @@ public class Window extends Widget {
     public UI.Grab dm = null;
     private Coord doff;
     public boolean large = false;
+    private String lockcap = null;
+    private boolean lockv = false;
+
+    /* Window lock: a locked window can't be dragged or resized. The state is
+     * saved per window title, so e.g. every "Inventory" window stays locked. */
+    public boolean locked() {
+	if(cap != null && !cap.equals(lockcap)) {
+	    lockcap = cap;
+	    lockv = Utils.getprefb("wndlock-" + cap, false);
+	}
+	return(lockv);
+    }
+
+    public void setlocked(boolean v) {
+	lockv = v;
+	if(cap != null) {
+	    lockcap = cap;
+	    Utils.setprefb("wndlock-" + cap, v);
+	}
+	if(v && (dm != null)) {
+	    dm.remove();
+	    dm = null;
+	}
+    }
+
+    public static class LockButton extends Widget {
+	private static final Map<String, Tex> cache = new HashMap<>();
+	private boolean h = false, a = false;
+	private UI.Grab d = null;
+
+	public LockButton(Coord sz) {
+	    super(sz);
+	}
+
+	private Window wnd() {
+	    for(Widget w = parent; w != null; w = w.parent) {
+		if(w instanceof Window)
+		    return((Window)w);
+	    }
+	    return(null);
+	}
+
+	private final Object locktip = new KeyboundTip("Unlock window (allow moving)", false);
+	private final Object unlocktip = new KeyboundTip("Lock window in place", false);
+
+	private static Tex img(Coord sz, boolean locked, boolean hover) {
+	    String key = sz + "/" + locked + "/" + hover;
+	    synchronized(cache) {
+		Tex tex = cache.get(key);
+		if(tex != null)
+		    return(tex);
+		BufferedImage ret = new BufferedImage(sz.x, sz.y, BufferedImage.TYPE_INT_ARGB);
+		java.awt.Graphics2D g = ret.createGraphics();
+		g.setRenderingHint(java.awt.RenderingHints.KEY_ANTIALIASING, java.awt.RenderingHints.VALUE_ANTIALIAS_ON);
+		int w = sz.x, ht = sz.y;
+		int bw = Math.max(6, (int)(w * 0.56)), bh = Math.max(5, (int)(ht * 0.40));
+		int bx = (w - bw) / 2, by = (int)(ht * 0.48);
+		int sw = Math.max(4, (int)(bw * 0.64)), sh = Math.max(4, (int)(ht * 0.42));
+		int sx = (w - sw) / 2 + (locked ? 0 : (int)(bw * 0.30)), sy = by - sh / 2 - (locked ? 0 : (int)(ht * 0.10));
+		Color body = locked ? new Color(232, 190, 64) : new Color(185, 185, 185);
+		if(hover)
+		    body = body.brighter();
+		java.awt.BasicStroke stroke = new java.awt.BasicStroke(Math.max(2f, w / 8f));
+		g.setStroke(new java.awt.BasicStroke(Math.max(2f, w / 8f) + 2f));
+		g.setColor(Color.BLACK);
+		g.drawArc(sx, sy, sw, sh, 0, 180);
+		g.drawLine(sx, sy + sh / 2, sx, by);
+		g.drawLine(sx + sw, sy + sh / 2, sx + sw, by);
+		g.setStroke(stroke);
+		g.setColor(body);
+		g.drawArc(sx, sy, sw, sh, 0, 180);
+		g.drawLine(sx, sy + sh / 2, sx, by);
+		g.drawLine(sx + sw, sy + sh / 2, sx + sw, by);
+		g.setColor(Color.BLACK);
+		g.fillRoundRect(bx - 1, by - 1, bw + 2, bh + 2, 3, 3);
+		g.setColor(body);
+		g.fillRoundRect(bx, by, bw, bh, 2, 2);
+		g.setColor(Color.BLACK);
+		g.fillRect(w / 2 - 1, by + bh / 3, 2, Math.max(2, bh / 3));
+		g.dispose();
+		tex = new TexI(ret);
+		cache.put(key, tex);
+		return(tex);
+	    }
+	}
+
+	public void draw(GOut g) {
+	    Window wnd = wnd();
+	    boolean locked = (wnd != null) && wnd.locked();
+	    Coord off = (a && h) ? UI.scale(0, 1) : Coord.z;
+	    g.image(img(sz, locked, h || (d != null)), off);
+	}
+
+	public void mousemove(MouseMoveEvent ev) {
+	    h = ev.c.isect(Coord.z, sz);
+	    super.mousemove(ev);
+	}
+
+	public boolean mousedown(MouseDownEvent ev) {
+	    if((ev.b != 1) || !ev.c.isect(Coord.z, sz))
+		return(false);
+	    a = true;
+	    d = ui.grabmouse(this);
+	    return(true);
+	}
+
+	public boolean mouseup(MouseUpEvent ev) {
+	    if((d != null) && (ev.b == 1)) {
+		d.remove();
+		d = null;
+		boolean click = a && ev.c.isect(Coord.z, sz);
+		a = false;
+		if(click) {
+		    Window wnd = wnd();
+		    if(wnd != null)
+			wnd.setlocked(!wnd.locked());
+		}
+		return(true);
+	    }
+	    return(super.mouseup(ev));
+	}
+
+	public Object tooltip(Coord c, Widget prev) {
+	    Window wnd = wnd();
+	    if((wnd != null) && wnd.locked())
+		return(locktip);
+	    return(unlocktip);
+	}
+    }
 
     @RName("wnd")
     public static class $_ implements Factory {
@@ -227,6 +358,7 @@ public class Window extends Widget {
 	public final boolean lg;
 	public final IButton cbtn;
     public IButton extlistbtn, stackbtn, unstackbtn, sortbtn;
+	public final LockButton lockbtn;
 	public boolean dragsize, cfocus;
 	public Area aa, ca;
 	public Coord cptl = Coord.z, cpsz = Coord.z;
@@ -237,6 +369,20 @@ public class Window extends Widget {
 	public DefaultDeco(boolean lg) {
 	    this.lg = lg;
 	    cbtn = add(new IButton(cbtni[0], cbtni[1], cbtni[2])).action(() -> ((Window)parent).reqclose());
+	    lockbtn = add(new LockButton(Utils.imgsz(cbtni[0])));
+	}
+
+	public void tick(double dt) {
+	    super.tick(dt);
+	    // Keep the lock button just left of the leftmost visible title bar button.
+	    int left = cbtn.c.x;
+	    for(IButton b : new IButton[] {extlistbtn, sortbtn, unstackbtn, stackbtn}) {
+		if((b != null) && b.visible && (b.c.x < left))
+		    left = b.c.x;
+	    }
+	    Coord nc = Coord.of(left - UI.scale(20), cbtn.c.y);
+	    if(!nc.equals(lockbtn.c))
+		lockbtn.c = nc;
 	}
 	public DefaultDeco() {this(false);}
 
@@ -349,7 +495,7 @@ public class Window extends Widget {
 	public UI.Grab szdrag;
 	private Coord szdragc;
 	public boolean mousedown(MouseDownEvent ev) {
-	    if(dragsize) {
+	    if(dragsize && !((Window)parent).locked()) {
 		Coord c = ev.c, cc = c.sub(ca.ul);
 		if((ev.b == 1) && (c.x < ca.br.x) && (c.y < ca.br.y) && (c.y >= ca.br.y - UI.scale(25) + (ca.br.x - c.x))) {
 		    szdrag = ui.grabmouse(this);
@@ -612,6 +758,8 @@ public class Window extends Widget {
     }
 
     public void drag(Coord off) {
+	if(locked())
+	    return;
 	dm = ui.grabmouse(this);
 	doff = off;
     }
