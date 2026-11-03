@@ -23,5 +23,6 @@ Small, single-topic files. Read only the ones relevant to the current task — d
 | [area-milker.md](area-milker.md) | *Milk Animals in Area* menu button (animal area + barrel area → milk into barrels, swap when full): `AreaMilker`, server error/sound hooks on `UI`. |
 | [craft-quantity.md](craft-quantity.md) | The crafting window's amount box / **Craft #** button (craft N items in a row) in `Makewindow`. |
 | [rock-crystal-guard.md](rock-crystal-guard.md) | The *Block Stone Actions while carrying Rock Crystal* option: `RockCrystalGuard`, the `UI.wdgmsg` hook. |
+| [village-member-sort.md](village-member-sort.md) | Village member list sort-by-group toggle and group filter (`Polity.MemberList`). |
 
 Tools: [tools/New-MenuGridButton.ps1](tools/New-MenuGridButton.ps1) — generates a menu-grid `.res` file by splicing a name/tooltip/description into an existing button's icon, without needing the (unavailable) official resource editor.

@@ -200,3 +200,15 @@ add an entry here. Procedure: [upstream-merge-workflow.md](upstream-merge-workfl
   those branches.
 - **Invariants:** the carried barrel is set down even when the run is stopped.
 - **Detail:** [area-milker.md](area-milker.md).
+
+## 12. Village member list: sort and filter by group
+
+- **Behavior:** a control row at the top of the village member list: a *Sort: Name / Sort: Group*
+  toggle (remembered across sessions, pref `polityMemberSortByGroup`) and a group dropdown
+  (*All groups*, then each group that has members, with its color, label and member count). Typing
+  `#3` in the list searches group 3 (`#3 bob` = group 3 and name contains "bob").
+- **Why:** Ian's request.
+- **Shared hooks:** `Polity.MemberList` (sort/filter list, `installControls()` takes one row off the
+  top of the list so the server resource's layout never moves) and `Polity.MemberListControls`;
+  `SSearchBox.refilter()` (re-runs the search without selecting a member).
+- **Detail:** [village-member-sort.md](village-member-sort.md).

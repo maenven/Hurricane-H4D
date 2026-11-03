@@ -134,6 +134,21 @@ public abstract class SSearchBox<I, W extends Widget> extends SListBox<I, W> {
 	updinfo();
     }
 
+    /** Re-runs the current search over allitems() without changing the
+     *  selection (search() picks the first match, which would select a
+     *  member every time the underlying list changes). H4D. */
+    protected void refilter() {
+	if(searching == null)
+	    return;
+	List<I> found = new ArrayList<>();
+	for(I item : allitems()) {
+	    if(searchmatch(item, searching))
+		found.add(item);
+	}
+	filtered = found;
+	updinfo();
+    }
+
     public void draw(GOut g) {
 	super.draw(g);
 	if(searching != null) {
