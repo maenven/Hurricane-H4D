@@ -170,3 +170,16 @@ add an entry here. Procedure: [upstream-merge-workflow.md](upstream-merge-workfl
   checkbox + tooltip; `Makewindow.stopBatch` widened from private to package-private.
 - **Invariants:** with the option off (or no crystal) every message passes untouched.
 - **Detail:** [rock-crystal-guard.md](rock-crystal-guard.md).
+
+## 9. Shear sheep and goats in an area
+
+- **Behavior:** menu-grid button *Shear Animals in Area* (Custom Client Extras → Other Scripts &
+  Tools). Press it, drag a rectangle over the animals; the best shears carried go into a hand (the
+  highest quality axe when there are no shears), then every domestic sheep and goat in the area is
+  right-clicked → *Shear wool*, nearest first. Press the button again to stop.
+- **Why:** Ian asked for it (2026-11-03); shearing follows Nurgling2's `ShearWool`.
+- **Fork-owned:** `src/haven/automated/AreaShearer.java`,
+  `res/customclient/menugrid/OtherScriptsAndTools/ShearAnimalsInArea.res`.
+- **Shared hooks:** `MenuGrid` (one `makeLocal` line, one `useCustom` branch); reuses
+  `MapView.selectAreaClientSide` from §6.
+- **Detail:** [area-shearer.md](area-shearer.md).

@@ -18,6 +18,7 @@ Small, single-topic files. Read only the ones relevant to the current task — d
 | [auto-kin.md](auto-kin.md) | Auto Kin: sharing hearth secrets through the Web Map server, the `/kinSecret(s)` contract, `AutoKin` / `BuddyWnd` hooks. |
 | [vehicle-area-transfer.md](vehicle-area-transfer.md) | Ctrl+Right-Click cart/wagon load/unload from an area: `VehicleAreaTransfer`, client-side `ClientMenu`, `MapView.selectAreaClientSide`. |
 | [area-fire-lighter.md](area-fire-lighter.md) | *Light Fires in Area* menu button (candelabrum/torchpost → light kilns/ovens/smoke sheds/fireplaces in an area): `AreaFireLighter`, fire bits per workstation. |
+| [area-shearer.md](area-shearer.md) | *Shear Animals in Area* menu button: tool choice (shears, else best axe), hand swap, flower-menu shearing loop in `AreaShearer`. |
 | [craft-quantity.md](craft-quantity.md) | The crafting window's amount box / **Craft #** button (craft N items in a row) in `Makewindow`. |
 | [rock-crystal-guard.md](rock-crystal-guard.md) | The *Block Stone Actions while carrying Rock Crystal* option: `RockCrystalGuard`, the `UI.wdgmsg` hook. |
 
