@@ -1,8 +1,11 @@
 # Light fires in an area (candelabrum / torchpost)
 
-Ctrl+Right-Click on a lit candelabrum (`gfx/terobjs/candelabrum`) or a torchpost
-(`gfx/terobjs/torchpost`) holding a lit torch opens a one-entry `ClientMenu` ("Light fires in area
-with this …"), then `MapView.selectAreaClientSide`. Code: `automated/AreaFireLighter`. Ported from
+Menu-grid button *Light Fires in Area* (Other Scripts & Tools, `MenuGrid.useCustom` →
+`AreaFireLighter.menuButton`). Two `MapView.selectAreaClientSide` rectangles: first over the light
+source — the nearest lit candelabrum (`gfx/terobjs/candelabrum`) or torchpost
+(`gfx/terobjs/torchpost`) with a lit torch in it (a candelabrum already carried also counts) — then
+over the workstations. Pressing the button while it runs stops it. Not Ctrl+Right-Click: in game that
+click reached the server and put the candelabrum out. Code: `automated/AreaFireLighter`. Ported from
 Nurgling2's `nurgling/actions/bots/LightObject`. Runs on its own thread (static `running`).
 
 ## State read from draw data

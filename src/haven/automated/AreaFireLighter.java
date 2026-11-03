@@ -10,8 +10,8 @@ import java.util.function.BooleanSupplier;
 import static haven.OCache.posres;
 
 /**
- * Ctrl+Right-Click on a lit candelabrum or a torchpost holding a lit torch, drag out an area, and
- * every kiln, smoke shed, oven, fireplace (and the other fire workstations below) in it that is not
+ * Menu-grid button (Other Scripts & Tools): drag a rectangle over a lit candelabrum or a torchpost
+ * holding a lit torch, then one over the workstations, and every kiln, smoke shed, oven, fireplace (and the other fire workstations below) in it that is not
  * burning yet gets lit with that light source. The source is put back where it was afterwards.
  *
  * Ported from Nurgling2's unified lighter ({@code nurgling/actions/bots/LightObject}): the fire bits
@@ -77,51 +77,76 @@ public class AreaFireLighter implements Runnable {
 	// UI thread
 	// ---------------------------------------------------------------------------------------
 
-	/** Called from MapView for Ctrl+Right-Click on a gob. True when the click was handled here. */
-	public static boolean ctrlRightClick(GameUI gui, Gob gob) {
-		if (gui == null || gob == null || gui.map == null)
-			return false;
-		if (OptWnd.areaFireLighterCheckBox == null || !OptWnd.areaFireLighterCheckBox.a)
-			return false;
-		String name = resName(gob);
-		if (!CANDELABRUM.equals(name) && !TORCHPOST.equals(name))
-			return false;
-		final Source src = CANDELABRUM.equals(name) ? Source.CANDELABRUM : Source.TORCHPOST;
-		final String srcName = (src == Source.CANDELABRUM) ? "candelabrum" : "torch";
-
+	/**
+	 * The "Light Fires in Area" menu-grid button. First the player drags a rectangle over the
+	 * light source (a lit candelabrum, or a torchpost holding a lit torch), then one over the
+	 * workstations to light. Pressing the button while it runs stops it.
+	 */
+	public static void menuButton(GameUI gui) {
+		if (gui == null || gui.map == null)
+			return;
 		if (isRunning()) {
-			gui.add(new ClientMenu(new String[]{"Stop lighting fires"}, idx -> stop(gui, true)), new Coord(-1, -1));
-			return true;
+			stop(gui, true);
+			return;
 		}
-		if (gui.vhand != null)
-			return false;
-		Gob carried = carriedBy(gui);
-		if (carried != null && carried.id != gob.id)
-			return false; // carrying something else: leave the click alone
+		if (gui.vhand != null) {
+			gui.error("Put down the item on your cursor first.");
+			return;
+		}
+		boolean started = gui.map.selectAreaClientSide((a, b) -> sourceAreaSelected(gui, a, b));
+		if (started)
+			gui.msg("Light fires: drag a rectangle over a lit candelabrum or a torchpost with a lit torch. Right-click cancels.", Color.WHITE);
+		else
+			gui.error("Another area selection is already active.");
+	}
 
-		if (src == Source.CANDELABRUM && !candelabrumLit(gob)) {
-			gui.error("That candelabrum isn't lit.");
-			return true;
-		}
-		if (src == Source.TORCHPOST) {
-			Boolean lit = torchpostLit(gob);
-			if (lit == null)
-				return false; // no torch on it: let the click through as before
-			if (!lit) {
-				gui.error("The torch on that torchpost isn't lit.");
-				return true;
+	private static void sourceAreaSelected(GameUI gui, Coord tul, Coord tbr) {
+		Coord2d ul = new Coord2d(tul.x * MCache.tilesz.x, tul.y * MCache.tilesz.y);
+		Coord2d br = new Coord2d(tbr.x * MCache.tilesz.x, tbr.y * MCache.tilesz.y);
+		Gob player = gui.map.player();
+		Coord2d from = (player != null) ? player.rc : ul.add(br).div(2);
+		Gob carried = carriedBy(gui);
+		Gob best = null;
+		int unlit = 0;
+		double bd = Double.MAX_VALUE;
+		for (Gob g : Utils.getAllGobs(gui)) {
+			String n = resName(g);
+			boolean inSel = g.rc.x >= ul.x && g.rc.x < br.x && g.rc.y >= ul.y && g.rc.y < br.y;
+			// A candelabrum the player already carries counts wherever it is.
+			if (!inSel && !(carried != null && g.id == carried.id))
+				continue;
+			boolean usable;
+			if (CANDELABRUM.equals(n))
+				usable = candelabrumLit(g);
+			else if (TORCHPOST.equals(n))
+				usable = Boolean.TRUE.equals(torchpostLit(g));
+			else
+				continue;
+			if (!usable) {
+				unlit++;
+				continue;
+			}
+			double d = g.rc.dist(from);
+			if (d < bd) {
+				bd = d;
+				best = g;
 			}
 		}
-
-		final long id = gob.id;
-		gui.add(new ClientMenu(new String[]{"Light fires in area with this " + srcName}, idx -> {
-			boolean started = gui.map.selectAreaClientSide((a, b) -> areaSelected(gui, id, src, a, b));
-			if (started)
-				gui.msg("Drag a rectangle over the kilns, smoke sheds, ovens and fireplaces to light. Right-click cancels.", Color.WHITE);
-			else
-				gui.error("Another area selection is already active.");
-		}), new Coord(-1, -1));
-		return true;
+		if (best == null) {
+			gui.error(unlit > 0 ? "The candelabrum/torch in that area isn't lit." : "No candelabrum or torchpost in that area.");
+			return;
+		}
+		if (carried != null && carried.id != best.id) {
+			gui.error("You're carrying something else. Put it down first.");
+			return;
+		}
+		final long id = best.id;
+		final Source src = CANDELABRUM.equals(resName(best)) ? Source.CANDELABRUM : Source.TORCHPOST;
+		boolean started = gui.map.selectAreaClientSide((a, b) -> areaSelected(gui, id, src, a, b));
+		if (started)
+			gui.msg("Now drag a rectangle over the kilns, smoke sheds, ovens and fireplaces to light. Right-click cancels.", Color.WHITE);
+		else
+			gui.error("Another area selection is already active.");
 	}
 
 	private static void areaSelected(GameUI gui, long sourceId, Source src, Coord tul, Coord tbr) {
@@ -136,7 +161,7 @@ public class AreaFireLighter implements Runnable {
 		stop(gui, false);
 		Thread t = new Thread(bot, "AreaFireLighter");
 		running = t;
-		gui.msg("Lighting " + todo.size() + " fire" + (todo.size() == 1 ? "" : "s") + ". Ctrl+Right-Click the light source again to stop.", Color.WHITE);
+		gui.msg("Lighting " + todo.size() + " fire" + (todo.size() == 1 ? "" : "s") + ". Press the Light Fires button again to stop.", Color.WHITE);
 		t.start();
 	}
 

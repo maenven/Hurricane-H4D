@@ -808,6 +808,7 @@ public class MenuGrid extends Widget implements KeyBinding.Bindable {
 		makeLocal("customclient/menugrid/OtherScriptsAndTools/QuestHelper");
 		makeLocal("customclient/menugrid/OtherScriptsAndTools/Add4BranchesScript");
 		makeLocal("customclient/menugrid/OtherScriptsAndTools/Add5WoodBlocksScript");
+		makeLocal("customclient/menugrid/OtherScriptsAndTools/LightFiresInArea");
 
 		// Category: Quick Switch From Belt
 		makeLocal("customclient/menugrid/QuickSwitchFromBelt/Equip_B12");
@@ -1155,6 +1156,8 @@ public class MenuGrid extends Widget implements KeyBinding.Bindable {
 				gui.runActionThread(new Thread(new AddBranchesToFurnace(gui, 4), "Add4Branches"));
 			} else if (ad[2].equals("Add5WoodBlocksScript")) {
 				gui.runActionThread(new Thread(new AddWoodBlocksToSmokeShed(gui, 5), "Add5WoodBlocks"));
+			} else if (ad[2].equals("LightFiresInArea")) {
+				haven.automated.AreaFireLighter.menuButton(gui);
 			}
 		} else if (ad[1].equals("QuickSwitchFromBelt")) {
 			new Thread(new EquipFromBelt(gui, ad[2]), "EquipFromBelt").start();

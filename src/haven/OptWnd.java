@@ -3358,7 +3358,6 @@ public class OptWnd extends Window {
 	public static CheckBox toggleItemStackingOnLoginCheckBox;
 	public static CheckBox autoSelect1stFlowerMenuCheckBox;
 	public static CheckBox vehicleAreaTransferCheckBox;
-	public static CheckBox areaFireLighterCheckBox;
 	public static CheckBox alsoUseContainersWithRepeaterCheckBox;
 	public static CheckBox autoRepeatFlowerMenuCheckBox;
 	public static CheckBox autoReloadCuriositiesFromInventoryCheckBox;
@@ -3605,13 +3604,6 @@ public class OptWnd extends Window {
 				}
 			}, prev.pos("bl").adds(0, 12).x(0));
 			vehicleAreaTransferCheckBox.tooltip = vehicleAreaTransferTooltip;
-			prev = add(areaFireLighterCheckBox = new CheckBox("Light Fires in an Area with a Candelabrum/Torchpost (Ctrl+Right-Click)"){
-				{a = Utils.getprefb("areaFireLighter", true);}
-				public void changed(boolean val) {
-					Utils.setprefb("areaFireLighter", val);
-				}
-			}, prev.pos("bl").adds(0, 2).x(0));
-			areaFireLighterCheckBox.tooltip = areaFireLighterTooltip;
             prev = add(walkWithPathFinderCheckBox = new CheckBox("Walk with Pathfinder (Ctrl+Shift+Click)"){
                 {a = Utils.getprefb("walkWithPathfinder", false);}
                 public void set(boolean val) {
@@ -5635,12 +5627,6 @@ public class OptWnd extends Window {
             "\n" +
             "\nRight-click cancels the area selection. Ctrl+Right-Click the vehicle again while it runs to stop it." +
             "\nWith this off, Ctrl+Right-Click on carts and wagons behaves as before.", UI.scale(320));
-    private static final Object areaFireLighterTooltip = RichText.render("Hold Ctrl and Right-Click a lit candelabrum, or a torchpost holding a lit torch, then drag a rectangle over your workstations." +
-            "\n" +
-            "\n$col[218,163,0]{Lit:} $col[185,185,185]{kilns, smoke sheds, ovens, fireplaces, tar kilns, cauldrons, braziers, smelters, stack furnaces, finery forges and crucibles that aren't burning yet. Fireplaces without fuel are skipped; fireplaces on embers are relit without the light source.}" +
-            "\n$col[218,163,0]{Afterwards:} $col[185,185,185]{the candelabrum is set back where it stood, or the torch goes back on its post.}" +
-            "\n" +
-            "\nRight-click cancels the area selection. Ctrl+Right-Click the light source again while it runs to stop it.", UI.scale(320));
     private static final Object walkWithPathfinderTooltip = RichText.render("You can use this to walk and avoid possible obstacles, for example, in your base. It's not perfect, and doesn't work with cliffs though." +
             "\n" +
             "\n$col[218,163,0]{Action Button:} $col[185,185,185]{This setting can also be turned on/off using an action button from the menu grid (Custom Client Extras → Toggles).}", UI.scale(300));
