@@ -783,6 +783,7 @@ public class OptWnd extends Window {
 	public static CheckBox improvedInstrumentMusicWindowCheckBox;
     public static CheckBox preventEscKeyFromClosingWindowsCheckBox;
     public static CheckBox stackWindowsWhenOpenedCheckBox;
+    public static CheckBox barrelTakeAmountCheckBox; // H4D: barrel "Take #" row, see doc/H4D-features/barrel-take-amount.md
 
     public class InterfaceSettingsPanel extends Panel {
 	public InterfaceSettingsPanel(Panel back) {
@@ -1169,6 +1170,16 @@ public class OptWnd extends Window {
             }
         }, rightColumn.pos("bl").adds(0, 2));
         stackWindowsWhenOpenedCheckBox.tooltip = stackWindowsWhenOpenedTooltip;
+        rightColumn = add(barrelTakeAmountCheckBox = new CheckBox("Barrel Window: Take a chosen Amount"){
+            {a = (Utils.getprefb("barrelTakeAmount", true));}
+            public void changed(boolean val) {
+                Utils.setprefb("barrelTakeAmount", val);
+            }
+        }, rightColumn.pos("bl").adds(0, 2));
+        barrelTakeAmountCheckBox.tooltip = RichText.render("Adds an amount box and a $col[218,163,0]{Take #} button to barrel windows, " +
+                "so you can take e.g. 5 flour, salt or cave dust instead of a full stack." +
+                "\n\nWhile it runs, $col[218,163,0]{Automatic Item Stacking} is switched off and then back on." +
+                "\n\n$col[185,185,185]{Reopen the barrel after changing this.}", UI.scale(300));
 
 		Widget backButton;
 		add(backButton = new PButton(UI.scale(200), "Back", 27, back, "Advanced Settings"), leftColumn.pos("bl").adds(0, 30).x(0));

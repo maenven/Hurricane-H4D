@@ -227,3 +227,18 @@ add an entry here. Procedure: [upstream-merge-workflow.md](upstream-merge-workfl
 - **Shared hooks:** `Fightview.uimsg("del")` (calls `reAggroAnimal`, skipped when the upstream
   per-target `AutoGiveButton` path already re-aggroed the same gob) and `OptWnd` (checkbox +
   tooltip). The upstream per-target toggle and its hotkey are unchanged.
+
+## 14. Barrel: take a chosen amount
+
+- **Behavior:** barrel windows get an amount box and a **Take #** button; it presses the stock Take
+  once per unit until that many units of flour/salt/cave dust/seeds arrived, switching Automatic
+  Item Stacking off for the run and back on afterwards. Option *Barrel Window: Take a chosen
+  Amount* in Interface settings (pref `barrelTakeAmount`, on by default).
+- **Why:** Ian's request (2026-11-03): one Take hands out a full stack.
+- **Fork-owned:** `BarrelTakeAmount`.
+- **Shared hooks:** `Window.tick` → `barrelTakeTick()` (adds/positions the row in windows captioned
+  `Barrel`), `OptWnd` (checkbox + tooltip after *Stack Windows when Opened*).
+- **Invariants:** only ever clicks the server's own Take button; never leaves stacking switched
+  off (restored on finish, stop and window close).
+- **Superseded when:** upstream ships a barrel take-amount control.
+- **Detail:** [barrel-take-amount.md](barrel-take-amount.md).

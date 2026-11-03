@@ -697,6 +697,7 @@ public class Window extends Widget {
     private String animst = null;
     public void tick(double dt) {
 	super.tick(dt);
+	barrelTakeTick();
 	if(anim != null) {
 	    if(anim.tick(dt)) {
 		if(animst == "show") {
@@ -921,6 +922,38 @@ public class Window extends Widget {
         super.dispose();
         if (this.cap != null)
             Utils.setprefc("wndc-" + this.cap, this.c);
+    }
+
+    /* H4D: barrel "Take #" row (doc/H4D-features/barrel-take-amount.md). Added once the server has put
+     * the barrel's own Take button in, and kept under the rest of the window's contents. */
+    private BarrelTakeAmount barrelTake = null;
+    private boolean barrelTakeChecked = false;
+    private void barrelTakeTick() {
+	if(!BarrelTakeAmount.WINDOW_CAP.equals(cap))
+	    return;
+	if(barrelTake == null) {
+	    if(barrelTakeChecked)
+		return;
+	    if((OptWnd.barrelTakeAmountCheckBox != null) && !OptWnd.barrelTakeAmountCheckBox.a) {
+		barrelTakeChecked = true;
+		return;
+	    }
+	    if(BarrelTakeAmount.findTake(this) == null)
+		return;
+	    barrelTakeChecked = true;
+	    barrelTake = add(new BarrelTakeAmount(), Coord.z);
+	}
+	int y = 0;
+	for(Widget ch = child; ch != null; ch = ch.next) {
+	    if((ch == barrelTake) || (ch == deco) || !ch.visible())
+		continue;
+	    y = Math.max(y, ch.c.y + ch.sz.y);
+	}
+	Coord want = Coord.of(0, y + UI.scale(5));
+	if(!want.equals(barrelTake.c)) {
+	    barrelTake.move(want);
+	    pack();
+	}
     }
 
     @Override
