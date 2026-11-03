@@ -127,6 +127,20 @@ add an entry here. Procedure: [upstream-merge-workflow.md](upstream-merge-workfl
 - **Superseded when:** upstream ships an equivalent area load/unload for vehicles.
 - **Detail:** [vehicle-area-transfer.md](vehicle-area-transfer.md).
 
+## 7. Craft a chosen quantity
+
+- **Behavior:** the crafting window gets an amount box and a **Craft #** button; it crafts that
+  many one after another and the button turns into `Stop done/total` while running.
+- **Why:** Ender's and Kami's clients have it; Ian asked for it (2026-11-03).
+- **Fork-owned:** none (all in `Makewindow`).
+- **Shared hooks:** `Makewindow` constructor (button row re-laid out: amount box, Craft #, Craft,
+  Craft All; Craft/Craft All also stop a batch), the H4D craft-quantity block (`CountEntry`,
+  batch state, `tick()` override).
+- **Invariants:** only ever sends the stock `make 0`; a plain Enter still crafts one; a batch
+  stops when no progress bar starts within 2 s.
+- **Superseded when:** upstream ships a craft-amount control.
+- **Detail:** [craft-quantity.md](craft-quantity.md).
+
 ## 8. Light fires in an area with a candelabrum or torchpost
 
 - **Behavior:** menu-grid button *Light Fires in Area* (Custom Client Extras → Other Scripts &
