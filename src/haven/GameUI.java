@@ -1642,6 +1642,7 @@ public class GameUI extends ConsoleHost implements Console.Directory, UI.Notice.
     private double lastwndsave = 0;
     public void tick(double dt) {
 	super.tick(dt);
+	haven.automated.AnimalStatsOverlay.tick(this, dt); // H4D
 	double now = Utils.rtime();
 	if(now - lastwndsave > 60) {
 	    savewndpos();

@@ -242,3 +242,16 @@ add an entry here. Procedure: [upstream-merge-workflow.md](upstream-merge-workfl
   off (restored on finish, stop and window close).
 - **Superseded when:** upstream ships a barrel take-amount control.
 - **Detail:** [barrel-take-amount.md](barrel-take-amount.md).
+
+## 16. Memorized animal stats above heads
+
+- **Behavior:** animals in the Cattle Roster show `Q | B | M` (quality, breeding quality, milk %)
+  above their name even with the roster closed; optionally the animal(s) with the best value of one
+  chosen stat among their species' roster get green text and a green gob tint. Toggle button
+  *Custom Client Extras → Toggles → Animal Stats Above Heads* and a checkbox + "highlight best"
+  dropdown on the Cattle Roster button row (prefs `animalStatsOverhead`, `animalStatsHighlight`).
+- **Why:** Ian's request (2026-11-04): stop reopening the roster to compare animals.
+- **Fork-owned:** `automated/AnimalStatsOverlay`, `res/customclient/menugrid/Toggles/AnimalStatsOverhead.res`.
+- **Shared hooks:** `croster/CattleId.draw` (stats line, name shown while enabled), `CattleId.roster()`,
+  `croster/RosterWindow.addroster` (controls), `GameUI.tick` (best-animal tint), `MenuGrid` (toggle).
+- **Detail:** [animal-stats-overhead.md](animal-stats-overhead.md).

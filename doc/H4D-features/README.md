@@ -25,5 +25,6 @@ Small, single-topic files. Read only the ones relevant to the current task — d
 | [rock-crystal-guard.md](rock-crystal-guard.md) | The *Block Stone Actions while carrying Rock Crystal* option: `RockCrystalGuard`, the `UI.wdgmsg` hook. |
 | [village-member-sort.md](village-member-sort.md) | Village member list sort-by-group toggle and group filter (`Polity.MemberList`). |
 | [barrel-take-amount.md](barrel-take-amount.md) | Barrel window amount box / **Take #** button (take N units of flour, salt, cave dust…): `BarrelTakeAmount`, `Window.barrelTakeTick`, stacking toggle. |
+| [animal-stats-overhead.md](animal-stats-overhead.md) | Memorized animal stats (Q/B/M) above heads and best-stat green highlight: `AnimalStatsOverlay`, `CattleId`, Cattle Roster entries. |
 
 Tools: [tools/New-MenuGridButton.ps1](tools/New-MenuGridButton.ps1) — generates a menu-grid `.res` file by splicing a name/tooltip/description into an existing button's icon, without needing the (unavailable) official resource editor.
