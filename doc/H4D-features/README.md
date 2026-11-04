@@ -25,7 +25,7 @@ Small, single-topic files. Read only the ones relevant to the current task — d
 | [rock-crystal-guard.md](rock-crystal-guard.md) | The *Block Stone Actions while carrying Rock Crystal* option: `RockCrystalGuard`, the `UI.wdgmsg` hook. |
 | [village-member-sort.md](village-member-sort.md) | Village member list sort-by-group toggle and group filter (`Polity.MemberList`). |
 | [barrel-take-amount.md](barrel-take-amount.md) | Barrel window amount box / **Take #** button (take N units of flour, salt, cave dust…): `BarrelTakeAmount`, `Window.barrelTakeTick`, stacking toggle. |
-| [vehicle-barrel-filler.md](vehicle-barrel-filler.md) | *Fill Barrels from Vehicle* menu button (well/cistern/mill + cart/wagon/snekkja/knarr): `VehicleBarrelFiller`, `MapView.startClientGobPick`. |
+| [vehicle-barrel-filler.md](vehicle-barrel-filler.md) | Ctrl+Right-Click *Fill barrels* on a well/cistern/mill (or cart/wagon) with a cart/wagon/snekkja/knarr: `VehicleBarrelFiller`, `MapView.startClientGobPick`. |
 
 | [animal-stats-overhead.md](animal-stats-overhead.md) | Memorized animal stats (Q/B/M) above heads and best-stat green highlight: `AnimalStatsOverlay`, `CattleId`, Cattle Roster entries. |
 

@@ -79,7 +79,11 @@ public class VehicleAreaTransfer implements Runnable {
 
 		final long vehicleId = gob.id;
 		final String vehicleName = CART.equals(name) ? "cart" : "wagon";
-		gui.add(new ClientMenu(new String[]{"Load " + vehicleName + " from area", "Unload " + vehicleName + " into area"}, idx -> {
+		gui.add(new ClientMenu(new String[]{"Load " + vehicleName + " from area", "Unload " + vehicleName + " into area", "Fill barrels at a well/cistern/mill"}, idx -> {
+			if (idx == 2) {
+				VehicleBarrelFiller.pickSourceFor(gui, vehicleId);
+				return;
+			}
 			Mode mode = (idx == 0) ? Mode.LOAD : Mode.UNLOAD;
 			String prompt = (mode == Mode.LOAD)
 					? "Drag a rectangle over the objects to load into the " + vehicleName + ". Right-click cancels."

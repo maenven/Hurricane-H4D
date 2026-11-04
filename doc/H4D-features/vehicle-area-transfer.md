@@ -16,6 +16,7 @@ server). Ported from Nurgling2's `LoadVehicleAction` / `UnloadVehicleAction`
 3. Load: the area's gobs are grouped by resource (obvious non-liftables filtered out, live animals
    too — only knocked ones), and a second `ClientMenu` picks the kind when there are several.
 4. The work runs on `GameUI.vehicleAreaTransferThread`.
+5. A third choice, *Fill barrels at a well/cistern/mill*, hands over to `VehicleBarrelFiller` (see [vehicle-barrel-filler.md](vehicle-barrel-filler.md)).
 
 ## Server mechanics used (mirrors Nurgling)
 

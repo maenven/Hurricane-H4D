@@ -245,13 +245,15 @@ add an entry here. Procedure: [upstream-merge-workflow.md](upstream-merge-workfl
 
 ## 15. Fill Barrels from Vehicle
 
-- **Behavior:** menu-grid button *Fill Barrels from Vehicle* (Other Scripts & Tools): click a source
-  (well, cistern, milling machine…), then a cart/wagon/snekkja/knarr; every empty barrel in the
+- **Behavior:** Ctrl+Right-Click a well, cistern or mill → *Fill barrels from a vehicle*, then click
+  a cart/wagon/snekkja/knarr (or Ctrl+Right-Click a cart/wagon → *Fill barrels at a
+  well/cistern/mill*, then click the source); every empty barrel in the
   vehicle is taken out, filled at the source (Shift+Right-Click while carried) and put back.
 - **Why:** Ian's request (2026-11-04), port of Nurgling2's "Fill barrels from well".
-- **Fork-owned:** `automated/VehicleBarrelFiller`, `FillBarrelsFromVehicle.res`.
-- **Shared hooks:** `MapView.Click.hit` → `clientGobPickHit` (one-shot client-side "click an
-  object", `startClientGobPick`), `MenuGrid` (makeLocal + useCustom branch).
+- **Fork-owned:** `automated/VehicleBarrelFiller`.
+- **Shared hooks:** `MapView.Click.hit` → `VehicleBarrelFiller.ctrlRightClick` (next to the
+  load/unload hook) and `clientGobPickHit` (one-shot client-side "click an object",
+  `startClientGobPick`); third option in `VehicleAreaTransfer`'s menu; `OptWnd` tooltip.
 - **Detail:** [vehicle-barrel-filler.md](vehicle-barrel-filler.md).
 
 ## 16. Memorized animal stats above heads
