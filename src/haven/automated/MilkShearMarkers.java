@@ -121,8 +121,9 @@ public class MilkShearMarkers {
      * 25 L. So the client remembers when it saw each animal milked and estimates what has refilled since. An
      * animal never seen milked is assumed to have milk. */
     public static final String PREF_MILKED = "milkShearMilkedAt";
-    /** Show the milk icon once this many liters have refilled. */
-    public static final double MIN_LITERS = 1.0;
+    /** Show the milk icon once this many liters have refilled. Milk refills in 0.1 L steps (Ian), and one step
+     * is enough to milk the animal (e.g. for credo quests). */
+    public static final double MIN_LITERS = 0.1;
     private static final long KEEP_MS = 3L * 24 * 3600 * 1000;
     private static final Map<Long, Long> milkedAt = new ConcurrentHashMap<>();
     static {
@@ -188,7 +189,7 @@ public class MilkShearMarkers {
 	return(Math.min(l, 25.0));
     }
 
-    /* A milking the player started by hand: a bucket/container used on the animal, Shift+right-click with a
+    /* A milking the player started by hand: a bucket/container used on the animal, right-click with a
      * barrel carried, or a "Milk" flower-menu option. The animal is marked milked right away (milking it empties
      * it, and so does a "no milk" error); only an error about the container being full undoes it, since the
      * animal then still has milk. */
@@ -224,7 +225,7 @@ public class MilkShearMarkers {
 	if(gui == null || gob == null)
 	    return;
 	lastClicked = gob;
-	if(shift && milkable(gob) && carriesSomething(gui))
+	if(milkable(gob) && carriesSomething(gui)) // right-click (with or without Shift) while carrying a barrel
 	    startMilking(gui, gob);
     }
 
