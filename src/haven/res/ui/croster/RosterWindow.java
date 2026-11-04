@@ -39,8 +39,21 @@ public class RosterWindow extends Window {
 	    x += wdg.sz.x + UI.scale(10);
 	}
 	buttons.get(0).click();
+	placeAnimalStatsControls(); // H4D: AnimalStatsOverlay controls on the button row
 	pack();
 	rmseq++;
+    }
+
+    private haven.automated.AnimalStatsOverlay.ShowBox statsShow;
+    private haven.automated.AnimalStatsOverlay.HighlightBox statsHighlight;
+    private void placeAnimalStatsControls() {
+	if(statsShow == null) {
+	    statsShow = add(new haven.automated.AnimalStatsOverlay.ShowBox());
+	    statsHighlight = add(new haven.automated.AnimalStatsOverlay.HighlightBox(UI.scale(170)));
+	}
+	int right = CattleRoster.WIDTH;
+	statsHighlight.move(new Coord(right - statsHighlight.sz.x, btny));
+	statsShow.move(new Coord(statsHighlight.c.x - UI.scale(10) - statsShow.sz.x, btny + (statsHighlight.sz.y - statsShow.sz.y) / 2));
     }
 
     public void reqclose() {

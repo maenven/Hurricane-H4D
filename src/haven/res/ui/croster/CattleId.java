@@ -55,6 +55,8 @@ public class CattleId extends GAttrib implements RenderTree.Node, PView.Render2D
 	return(entry);
     }
 
+    public CattleRoster<?> roster() {return(roster);}
+
     private String lnm;
     private int lgrp;
     private Tex rnm;
@@ -70,12 +72,31 @@ public class CattleId extends GAttrib implements RenderTree.Node, PView.Render2D
 		lnm = name;
 		lgrp = grp;
 	    }
-	    if((rnm != null) && (wnd != null) && wnd.visible) {
+	    boolean stats = (entry != null) && haven.automated.AnimalStatsOverlay.enabled();
+	    if((rnm != null) && (((wnd != null) && wnd.visible) || stats)) {
 		Coord nmc = sc.sub(rnm.sz().x / 2, 0);
 		g.aimage(rnm, sc, 0.5, 1.0);
 		if((entry != null) && entry.mark.a)
 		    g.aimage(selectionMark, nmc.sub(selectionMark.sz().x, 0), 0.1, 1.3);
 	    }
+	    if(stats) { // H4D: memorized animal stats above the name (AnimalStatsOverlay)
+		String txt = haven.automated.AnimalStatsOverlay.text(entry);
+		boolean best = haven.automated.AnimalStatsOverlay.isBest(entry);
+		if((rstats == null) || !txt.equals(lstats) || (best != lbest)) {
+		    if(rstats != null)
+			rstats.dispose();
+		    Color col = best ? haven.automated.AnimalStatsOverlay.BEST_TEXT : Color.WHITE;
+		    rstats = txt.isEmpty() ? null : new TexI(rasterimg(blurmask2(Utils.outline2(fnd.render(txt, col).img, Color.BLACK, true).getRaster(), UI.rscale(1.0), UI.rscale(1.0), Color.BLACK)));
+		    lstats = txt;
+		    lbest = best;
+		}
+		if(rstats != null)
+		    g.aimage(rstats, sc.sub(0, (rnm != null) ? rnm.sz().y : 0), 0.5, 1.0);
+	    }
 	}
     }
+
+    private String lstats;
+    private boolean lbest;
+    private Tex rstats;
 }

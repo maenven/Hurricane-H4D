@@ -776,6 +776,7 @@ public class MenuGrid extends Widget implements KeyBinding.Bindable {
 		makeLocal("customclient/menugrid/Toggles/QueuedMovementWindow");
 		makeLocal("customclient/menugrid/Toggles/AutoDrop");
 		makeLocal("customclient/menugrid/Toggles/FlowerMenuAutoSelect");
+		makeLocal("customclient/menugrid/Toggles/AnimalStatsOverhead");
 
 		// Category: Bots
 		makeLocal("customclient/menugrid/Bots/OceanScoutBot");
@@ -886,6 +887,8 @@ public class MenuGrid extends Widget implements KeyBinding.Bindable {
 				AutoDropManagerWindow.autoDropItemsCheckBox.set(!AutoDropManagerWindow.autoDropItemsCheckBox.a);
 			} else if (ad[2].equals("FlowerMenuAutoSelect")) {
 				FlowerMenuAutoSelectManagerWindow.flowerMenuAutoSelectCheckBox.set(!FlowerMenuAutoSelectManagerWindow.flowerMenuAutoSelectCheckBox.a);
+			} else if (ad[2].equals("AnimalStatsOverhead")) {
+				haven.automated.AnimalStatsOverlay.toggle(ui);
 			} else if (ad[2].equals("PathfinderWalking")) {
                 OptWnd.walkWithPathFinderCheckBox.set(!OptWnd.walkWithPathFinderCheckBox.a);
 			}
