@@ -22,7 +22,8 @@
 1. *Select area* → `MapView.selectAreaClientSide`; `preview()` lists gobs in the rectangle with a
    `CattleId` whose entry passes the filters. They get a red `KillMark` tint (set/removed in the window's
    `tick`, UI thread). Changing the stat/limit/genders re-runs the preview.
-2. *Start* (bot thread): equip the best sharp tool once (`CuttingToolAutoEquip.equipBest`, SHARP), butcher
+2. *Start* (bot thread): put a Butcher's Cleaver in hand once (`CuttingToolAutoEquip.equipBest`, CLEAVER policy: the
+   best cleaver always beats any other sharp tool; without one, the best sharp tool), butcher
    carcasses already lying in the area (resume after an inventory-full stop), then per target, nearest
    first: right-click → *Slaughter* → wait until the gob has a `knock`/`dead` pose → roster `rm` →
    butcher: right-click the carcass, pick the first present of Skin, Scale, Crack, Clean, Butcher,

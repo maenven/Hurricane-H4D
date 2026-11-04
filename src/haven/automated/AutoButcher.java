@@ -340,9 +340,8 @@ public class AutoButcher extends Window {
 		    gui.error("Auto Butcher: get off the vehicle first.");
 		    return;
 		}
-		// Best sharp tool in hand once, up front (the same logic as the Butcher auto-equip option).
-		if (CuttingToolAutoEquip.needsSwap(gui, CuttingToolAutoEquip.Policy.SHARP) || !holdsSharpTool())
-		    CuttingToolAutoEquip.equipBest(gui, CuttingToolAutoEquip.Policy.SHARP);
+		// Butcher's Cleaver in hand (else the best sharp tool), once, up front.
+		CuttingToolAutoEquip.equipBest(gui, CuttingToolAutoEquip.Policy.CLEAVER);
 
 		// Carcasses left in the area from an earlier, interrupted run go first.
 		if (carcasses) {
@@ -399,24 +398,6 @@ public class AutoButcher extends Window {
 	    gui.msg(msg, Color.WHITE);
 	    pendingInfo = msg.substring("Auto Butcher: ".length());
 	}
-    }
-
-    private boolean holdsSharpTool() {
-	Equipory eq = gui.getequipory();
-	if (eq == null)
-	    return true;
-	for (int s : new int[]{6, 7}) {
-	    WItem w = eq.slots[s];
-	    if (w == null)
-		continue;
-	    try {
-		String n = w.item.getname();
-		if (n != null && (n.contains("Knife") || n.contains("Axe") || n.contains("Cleaver") || n.contains("Sword") || n.contains("Dagger")))
-		    return true;
-	    } catch (Exception ignored) {
-	    }
-	}
-	return false;
     }
 
     /** Right-click, "Slaughter", then wait until the animal lies knocked over. */

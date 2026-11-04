@@ -279,5 +279,6 @@ add an entry here. Procedure: [upstream-merge-workflow.md](upstream-merge-workfl
 - **Fork-owned:** `src/haven/automated/AutoButcher.java`,
   `res/customclient/menugrid/OtherScriptsAndTools/AutoButcher.res`.
 - **Shared hooks:** `MenuGrid` (button + `useCustom` branch). Reuses `AnimalStatsOverlay.value`/`HIGHLIGHTS`
-  and `CuttingToolAutoEquip.equipBest`.
+  and `CuttingToolAutoEquip.equipBest`. Adds the `CLEAVER` policy there (Butcher's Cleaver beats any other
+  sharp tool), now also used by the auto-equip option for manual *Slaughter* and *Butcher* (Ian, 2026-11-04).
 - **Detail:** [auto-butcher.md](auto-butcher.md).
