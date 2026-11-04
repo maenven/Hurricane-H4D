@@ -14,7 +14,7 @@ composited at 128×128 into the image layer of `LightFiresInArea.res` (same `sca
 - Shears already in a hand → kept. Else the highest-quality `gfx/invobjs/shears` carried. Else the
   highest-quality axe held or carried (basenames `axe-m`, `stoneaxe`, `woodsmansaxe`,
   `tinkersthrowingaxe`, `b12axe`; pickaxe excluded). No tool at all → shearing is tried anyway.
-- Swap: two different items in hand → the left-hand one is taken and stashed first. Then
+- Swap: the tool goes into the second (right) hand slot first, then an empty first slot; two different items in hand → the right-hand one is taken and stashed first. Then
   `take` the tool → `Equipory.wdgmsg("drop", slot)`; anything the swap puts on the cursor (e.g. a
   two-hander) is dropped back where the tool was, else anywhere there's room. The tool is not put
   away afterwards.

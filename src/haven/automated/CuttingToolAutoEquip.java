@@ -263,13 +263,14 @@ public class CuttingToolAutoEquip {
 			boolean twoHander = left != null && right != null && left.item == right.item;
 			int slot;
 			// Replace a worse tool of the same kind already in hand first, so you don't end up holding
-			// two axes; then use an empty hand; then swap out whatever else is held.
-			if (!twoHander && left != null && rank(left.item, policy) >= 0) slot = LEFT_HAND;
-			else if (!twoHander && right != null && rank(right.item, policy) >= 0) slot = RIGHT_HAND;
-			else if (left == null && !twoHander) slot = LEFT_HAND;
+			// two axes; then use an empty hand; then swap out whatever else is held. The second (right)
+			// hand slot always comes first, so whatever lives in the first slot (a sack, a shield) stays.
+			if (!twoHander && right != null && rank(right.item, policy) >= 0) slot = RIGHT_HAND;
+			else if (!twoHander && left != null && rank(left.item, policy) >= 0) slot = LEFT_HAND;
 			else if (right == null && !twoHander) slot = RIGHT_HAND;
-			else if (!isRestricted(left)) slot = LEFT_HAND;
+			else if (left == null && !twoHander) slot = LEFT_HAND;
 			else if (!isRestricted(right)) slot = RIGHT_HAND;
+			else if (!isRestricted(left)) slot = LEFT_HAND;
 			else {
 				gui.ui.error("Auto-equip cutting tool: both hands hold items that can't go into an inventory.");
 				return;
