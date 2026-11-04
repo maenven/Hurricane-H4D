@@ -54,9 +54,12 @@ public class RosterWindow extends Window {
 	    statsHeatmap = add(new haven.automated.AnimalStatsOverlay.HeatmapBox());
 	}
 	int right = CattleRoster.WIDTH;
-	statsHeatmap.move(new Coord(right - statsHeatmap.sz.x, btny + (statsHighlight.sz.y - statsHeatmap.sz.y) / 2));
-	statsHighlight.move(new Coord(statsHeatmap.c.x - UI.scale(8) - statsHighlight.sz.x, btny));
-	statsShow.move(new Coord(statsHighlight.c.x - UI.scale(10) - statsShow.sz.x, btny + (statsHighlight.sz.y - statsShow.sz.y) / 2));
+	/* Right edge: "Stats above animals" sits right above "Heatmap"; the dropdown stays left of Heatmap,
+	 * where it was (clear of the type buttons on the left). */
+	int row2 = btny + statsShow.sz.y + UI.scale(4);
+	statsShow.move(new Coord(right - statsShow.sz.x, btny));
+	statsHighlight.move(new Coord(right - statsHeatmap.sz.x - UI.scale(8) - statsHighlight.sz.x, row2));
+	statsHeatmap.move(new Coord(right - statsHeatmap.sz.x, row2 + (statsHighlight.sz.y - statsHeatmap.sz.y) / 2));
     }
 
     public void reqclose() {
