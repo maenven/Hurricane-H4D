@@ -2443,6 +2443,7 @@ public class MapView extends PView implements DTarget, Console.Directory, PFList
 				}
 				if (clickb == 3) { // Right Click
 					ProcessTimers.noteInteract(gob); // H4D: link the window that opens to this gob
+					haven.automated.MilkShearMarkers.noteClick(ui.gui, gob, ui.modshift); // H4D: milking with a carried barrel
 					if (OptWnd.autoSwitchBootsCheckBox.a) {
 						switchBunnySlippersAndArmorBoots(gob);
 					}
@@ -2729,8 +2730,14 @@ public class MapView extends PView implements DTarget, Console.Directory, PFList
 	new Hittest(cc) {
 	    public void hit(Coord pc, Coord2d mc, ClickData inf) {
 		Object[] args = {pc, mc.floor(posres), ui.modflags()};
-		if(inf != null)
+		if(inf != null) {
 		    args = Utils.extend(args, inf.clickargs());
+		    try { // H4D: milking with a bucket or other container
+			Object[] ca = inf.clickargs();
+			if(ca.length > 1 && ca[1] instanceof Integer)
+			    haven.automated.MilkShearMarkers.noteItemAct(ui.gui, glob.oc.getgob(((Integer)ca[1]).longValue()));
+		    } catch(Exception ignored) {}
+		}
 		wdgmsg("itemact", args);
 	    }
 	}.run();

@@ -15,22 +15,21 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static haven.PUtils.blurmask2;
-import static haven.PUtils.rasterimg;
 
 /**
- * H4D: marks cattle, goats and sheep that can be milked ("Milk") or sheared ("Wool") with a label above them.
+ * H4D: shows a milk droplet above cattle, goats and sheep that have milk, and a wool icon (sheep wool or
+ * mohair) above sheep and goats that can be sheared.
  *
  * <ul>
  * <li><b>Wool</b> is read live from the animal's model, as Ender's client does ({@code GobTag.FLEECE}): an
  * animal that has wool carries a model part whose resource name contains {@code -fleece}; shearing removes it.
  * Works for every sheep/goat in view, memorized or not.</li>
- * <li><b>Milk</b> has no visible sign on the model, so it comes from the Cattle Roster's lactation column
- * (field {@code lactate} of the server's per-species entry class, as in Nurgling2's
- * {@code MilkAnimalsAction}). Only memorized animals, and only once the roster has been opened this
- * session.</li>
+ * <li><b>Milk</b> has no visible sign. The Cattle Roster's {@code lactate} flag only says the animal produces
+ * milk, so the client also remembers when it saw each animal milked (by hand or by the Milk Animals button)
+ * and estimates the refill from the roster's milk quantity (wiki: quantity * 0.01 L per 10 min). The droplet
+ * shows once {@link #MIN_LITERS} has refilled; an animal never seen milked counts as having milk.</li>
  * </ul>
- * The label sits above the name/stats that {@link CattleId} draws ({@link CattleId#drawnHeight}).
+ * The icons sit above the name/stats that {@link CattleId} draws ({@link CattleId#drawnHeight}).
  */
 public class MilkShearMarkers {
     public static final String PREF_ENABLED = "milkShearMarkers";
@@ -76,15 +75,19 @@ public class MilkShearMarkers {
 
     private static final Map<Class<?>, Map<String, Optional<Field>>> fields = new ConcurrentHashMap<>();
 
-    private static boolean flag(Entry e, String name) {
-	Optional<Field> f = fields.computeIfAbsent(e.getClass(), k -> new ConcurrentHashMap<>())
+    private static Optional<Field> field(Entry e, String name) {
+	return(fields.computeIfAbsent(e.getClass(), k -> new ConcurrentHashMap<>())
 	    .computeIfAbsent(name, n -> {
 		try {
 		    return(Optional.of(e.getClass().getField(n)));
 		} catch(NoSuchFieldException ex) {
 		    return(Optional.empty());
 		}
-	    });
+	    }));
+    }
+
+    private static boolean flag(Entry e, String name) {
+	Optional<Field> f = field(e, name);
 	if(!f.isPresent())
 	    return(false);
 	try {
@@ -95,7 +98,7 @@ public class MilkShearMarkers {
 	}
     }
 
-    /** True when the Cattle Roster lists the animal as lactating. */
+    /** True when the Cattle Roster lists the animal as lactating (it produces milk, whether or not it has any now). */
     public static boolean milkable(Gob gob) {
 	CattleId cid = gob.getattr(CattleId.class);
 	Entry e = (cid == null) ? null : cid.entry();
@@ -104,22 +107,209 @@ public class MilkShearMarkers {
 	return(flag(e, "lactate") && !flag(e, "dead"));
     }
 
-    private static final Text.Foundry fnd = new Text.Foundry(Text.dfont, 12);
-    public static final Color MILK_COL = new Color(170, 215, 255);
-    public static final Color WOOL_COL = new Color(255, 225, 140);
-    private static final Map<Integer, Tex> labels = new ConcurrentHashMap<>();
-
-    private static BufferedImage word(String s, Color c) {
-	return(rasterimg(blurmask2(Utils.outline2(fnd.render(s, c).img, Color.BLACK, true).getRaster(), UI.rscale(1.0), UI.rscale(1.0), Color.BLACK)));
+    /** Lactating and, by the estimate below, with at least {@link #MIN_LITERS} of milk in it. */
+    public static boolean hasMilk(Gob gob) {
+	CattleId cid = gob.getattr(CattleId.class);
+	Entry e = (cid == null) ? null : cid.entry();
+	if(e == null || !flag(e, "lactate") || flag(e, "dead"))
+	    return(false);
+	return(estimatedMilk(gob, e) >= MIN_LITERS);
     }
 
-    /** 1 = milk, 2 = wool, 3 = both. */
-    private static Tex label(int kind) {
-	return(labels.computeIfAbsent(kind, k -> {
-	    if(k == 1) return(new TexI(word("Milk", MILK_COL)));
-	    if(k == 2) return(new TexI(word("Wool", WOOL_COL)));
-	    return(new TexI(ItemInfo.catimgsh(UI.scale(4), word("Milk", MILK_COL), word("Wool", WOOL_COL))));
-	}));
+    /* ---- Milk availability: the roster only says the animal is lactating, not that it has milk now. ----
+     * The wiki (ringofbrodgar "Milk") gives the refill rate: Milk Quantity * 0.01 L per 10 minutes, capped at
+     * 25 L. So the client remembers when it saw each animal milked and estimates what has refilled since. An
+     * animal never seen milked is assumed to have milk. */
+    public static final String PREF_MILKED = "milkShearMilkedAt";
+    /** Show the milk icon once this many liters have refilled. */
+    public static final double MIN_LITERS = 1.0;
+    private static final long KEEP_MS = 3L * 24 * 3600 * 1000;
+    private static final Map<Long, Long> milkedAt = new ConcurrentHashMap<>();
+    static {
+	String raw = Utils.getpref(PREF_MILKED, "");
+	long now = System.currentTimeMillis();
+	for(String part : raw.split(",")) {
+	    int i = part.indexOf(':');
+	    if(i <= 0) continue;
+	    try {
+		long id = Long.parseLong(part.substring(0, i)), t = Long.parseLong(part.substring(i + 1));
+		if(now - t < KEEP_MS)
+		    milkedAt.put(id, t);
+	    } catch(NumberFormatException ignored) {}
+	}
+    }
+
+    private static void saveMilked() {
+	long now = System.currentTimeMillis();
+	StringBuilder sb = new StringBuilder();
+	for(Map.Entry<Long, Long> e : milkedAt.entrySet()) {
+	    if(now - e.getValue() >= KEEP_MS) {
+		milkedAt.remove(e.getKey());
+		continue;
+	    }
+	    if(sb.length() > 0) sb.append(',');
+	    sb.append(e.getKey()).append(':').append(e.getValue());
+	}
+	Utils.setpref(PREF_MILKED, sb.toString());
+    }
+
+    private static UID uid(Gob gob) {
+	CattleId cid = gob.getattr(CattleId.class);
+	return((cid == null) ? null : cid.id);
+    }
+
+    /** Remember that {@code gob} was just milked (its milk is now empty). */
+    public static void noteMilked(Gob gob) {
+	UID id = (gob == null) ? null : uid(gob);
+	if(id == null) return;
+	milkedAt.put(id.bits, System.currentTimeMillis());
+	saveMilked();
+    }
+
+    private static Double num(Entry e, String name) {
+	Optional<Field> f = field(e, name);
+	if(!f.isPresent()) return(null);
+	try {
+	    Object v = f.get().get(e);
+	    return((v instanceof Number) ? ((Number)v).doubleValue() : null);
+	} catch(IllegalAccessException ex) {
+	    return(null);
+	}
+    }
+
+    /** Estimated liters in the animal now, or +Inf when it was never seen milked. */
+    public static double estimatedMilk(Gob gob, Entry e) {
+	Long t = milkedAt.get(e.id.bits);
+	if(t == null)
+	    return(Double.POSITIVE_INFINITY);
+	Double q = num(e, "milk");
+	double rate = (q == null) ? 0 : q * 0.01; // liters per 10 minutes
+	double l = rate * ((System.currentTimeMillis() - t) / 600000.0);
+	return(Math.min(l, 25.0));
+    }
+
+    /* A milking the player started by hand: Shift+right-click with a barrel carried, or a bucket/container
+     * used on the animal. It counts once the character stands still again without a server error. */
+    private static class Pending {
+	final Gob gob; final long start; final int errSeq;
+	Pending(Gob gob, long start, int errSeq) {this.gob = gob; this.start = start; this.errSeq = errSeq;}
+    }
+    private static volatile Pending pending = null;
+
+    private static boolean milkContainer(String res) {
+	if(res == null) return(false);
+	return(res.contains("bucket") || res.contains("barrel") || res.contains("cup") || res.contains("jug")
+	       || res.contains("waterskin") || res.contains("flask") || res.contains("kuksa") || res.contains("pitcher"));
+    }
+
+    private static boolean carriesSomething(GameUI gui) {
+	long pl = gui.map.plgob;
+	if(pl < 0) return(false);
+	for(Gob g : Utils.getAllGobs(gui)) {
+	    Following f = g.getattr(Following.class);
+	    if(f != null && f.tgt == pl)
+		return(true);
+	}
+	return(false);
+    }
+
+    /** Called by MapView on a right-click on a gob. */
+    public static void noteClick(GameUI gui, Gob gob, boolean shift) {
+	if(gui == null || gob == null || !shift || !milkable(gob) || !carriesSomething(gui))
+	    return;
+	pending = new Pending(gob, System.currentTimeMillis(), gui.ui.serverErrorSeq);
+    }
+
+    /** Called by MapView when the held item is used on a gob. */
+    public static void noteItemAct(GameUI gui, Gob gob) {
+	if(gui == null || gob == null || !milkable(gob) || gui.vhand == null)
+	    return;
+	String res = null;
+	try {
+	    res = gui.vhand.item.getres().name;
+	} catch(Loading ignored) {}
+	if(!milkContainer(res))
+	    return;
+	pending = new Pending(gob, System.currentTimeMillis(), gui.ui.serverErrorSeq);
+    }
+
+    private static long idleSince = -1;
+    /** Called from GameUI.tick. */
+    public static void tick(GameUI gui) {
+	Pending p = pending;
+	if(p == null || gui.map == null)
+	    return;
+	long now = System.currentTimeMillis();
+	if(gui.ui.serverErrorSeq != p.errSeq || now - p.start > 45000) {
+	    pending = null; // "no milk", "barrel is full", gave up: not counted
+	    return;
+	}
+	Gob pl = gui.map.player();
+	boolean busy = (pl != null && pl.getv() > 0) || gui.prog != null;
+	if(busy || now - p.start < 1500) {
+	    idleSince = -1;
+	    return;
+	}
+	if(idleSince < 0) {
+	    idleSince = now;
+	    return;
+	}
+	if(now - idleSince > 1000) {
+	    pending = null;
+	    idleSince = -1;
+	    noteMilked(p.gob);
+	}
+    }
+
+    /* ---- Icons ---- */
+    public static final String MILK_ICON = "gfx/hud/rosters/milkquantity";
+    public static final String SHEEP_WOOL_ICON = "gfx/invobjs/wool-sheep";
+    public static final String GOAT_WOOL_ICON = "gfx/invobjs/wool-goat";
+    private static final Map<String, Indir<Resource>> iconRes = new ConcurrentHashMap<>();
+    private static final Map<String, BufferedImage> iconImg = new ConcurrentHashMap<>();
+    private static final Map<String, Tex> labels = new ConcurrentHashMap<>();
+
+    /** The icon image, or null while it is still loading. */
+    private static BufferedImage icon(String name) {
+	BufferedImage img = iconImg.get(name);
+	if(img != null) return(img);
+	try {
+	    Resource r = iconRes.computeIfAbsent(name, n -> Resource.remote().load(n)).get();
+	    BufferedImage raw = r.layer(Resource.imgc).img;
+	    int h = UI.scale(20);
+	    int w = Math.max(1, raw.getWidth() * h / Math.max(1, raw.getHeight()));
+	    img = PUtils.convolvedown(raw, Coord.of(w, h), CharWnd.iconfilter);
+	    iconImg.put(name, img);
+	    return(img);
+	} catch(Loading l) {
+	    return(null);
+	} catch(Exception e) {
+	    return(null);
+	}
+    }
+
+    private static String woolIcon(Gob gob) {
+	try {
+	    Resource r = gob.getres();
+	    if(r != null && r.name.contains("/goat/"))
+		return(GOAT_WOOL_ICON);
+	} catch(Loading ignored) {}
+	return(SHEEP_WOOL_ICON);
+    }
+
+    /** The label for milk and/or the given wool icon, or null while an icon is loading. */
+    private static Tex label(boolean milk, String wool) {
+	String key = (milk ? "m" : "") + "|" + ((wool == null) ? "" : wool);
+	Tex t = labels.get(key);
+	if(t != null) return(t);
+	BufferedImage m = milk ? icon(MILK_ICON) : null;
+	BufferedImage w = (wool != null) ? icon(wool) : null;
+	if((milk && m == null) || (wool != null && w == null))
+	    return(null);
+	BufferedImage img = (m != null && w != null) ? ItemInfo.catimgsh(UI.scale(2), m, w) : ((m != null) ? m : w);
+	t = new TexI(img);
+	labels.put(key, t);
+	return(t);
     }
 
     /** Gob attribute that draws the label. Attached in {@code Gob.init} to every {@link #isMilkOrWoolAnimal} gob. */
@@ -141,7 +331,7 @@ public class MilkShearMarkers {
 	    boolean dead = Boolean.TRUE.equals(gob.knocked);
 	    int k = 0;
 	    if(!dead) {
-		if(milkable(gob)) k |= 1;
+		if(hasMilk(gob)) k |= 1;
 		if(shearable(gob)) k |= 2;
 	    }
 	    kind = k;
@@ -156,7 +346,9 @@ public class MilkShearMarkers {
 		return;
 	    CattleId cid = gob.getattr(CattleId.class);
 	    int up = (cid == null) ? 0 : cid.drawnHeight();
-	    g.aimage(label(k), sc.sub(0, up), 0.5, 1.0);
+	    Tex t = label((k & 1) != 0, ((k & 2) != 0) ? woolIcon(gob) : null);
+	    if(t != null)
+		g.aimage(t, sc.sub(0, up), 0.5, 1.0);
 	}
     }
 }

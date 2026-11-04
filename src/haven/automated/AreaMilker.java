@@ -196,6 +196,7 @@ public class AreaMilker implements Runnable {
 					Outcome o = milk(a);
 					if (o == Outcome.MILKED) {
 						milked++;
+						MilkShearMarkers.noteMilked(a); // H4D: hide its milk icon until it refills
 						done.add(a.id);
 					} else if (o == Outcome.BARREL_FULL) {
 						putBarrelBack();

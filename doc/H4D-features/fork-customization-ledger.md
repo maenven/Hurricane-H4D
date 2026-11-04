@@ -295,10 +295,11 @@ add an entry here. Procedure: [upstream-merge-workflow.md](upstream-merge-workfl
 - **Detail:** [process-timers.md](process-timers.md).
 
 ### Milkable/shearable animal markers
-- **Behavior:** "Milk"/"Wool" label above animals that can be milked/sheared; Toggles menu button.
+- **Behavior:** milk droplet / wool (or mohair) icon above animals that have milk or can be sheared; Toggles menu button.
 - **Why:** Ian's request (2026-11-04); wool detection as in Ender's client, milk from the roster as in Nurgling2.
 - **Fork-owned:** `src/haven/automated/MilkShearMarkers.java`,
   `res/customclient/menugrid/Toggles/MilkShearMarkers.res`.
 - **Shared hooks:** `Gob.init` (attaches the marker), `MenuGrid` (Toggles button), `CattleId.draw`
-  (records `drawnHeight()`).
+  (records `drawnHeight()`), `MapView` right-click and `iteminteract` (milking detection), `GameUI.tick`,
+  `AreaMilker` (notes each milked animal).
 - **Detail:** [milk-shear-markers.md](milk-shear-markers.md).
