@@ -118,6 +118,7 @@ public class Gob implements RenderTree.Node, Sprite.Owner, Skeleton.ModOwner, Eq
 	IconSignGobInfo iconSignGobInfo;
     ProduceSackGobInfo produceSackGobInfo;
     ProcessTimerGobInfo processTimerInfo; // H4D
+    haven.automated.MilkShearMarkers.Marker milkShearMarker; // H4D
 	GobCheeseRackInfo cheeseRackInfo;
 	public boolean combatFoeHighlighted = false;
 	private GobSpeedInfo gobSpeedInfo;
@@ -1284,6 +1285,10 @@ public class Gob implements RenderTree.Node, Sprite.Owner, Skeleton.ModOwner, Eq
 			if (ProcessTimers.isProcessor(res.name) && processTimerInfo == null) { // H4D
 				processTimerInfo = new ProcessTimerGobInfo(this);
 				setattr(ProcessTimerGobInfo.class, processTimerInfo);
+			}
+			if (haven.automated.MilkShearMarkers.isMilkOrWoolAnimal(res.name) && milkShearMarker == null) { // H4D
+				milkShearMarker = new haven.automated.MilkShearMarkers.Marker(this);
+				setattr(haven.automated.MilkShearMarkers.Marker.class, milkShearMarker);
 			}
 			if (res.name.startsWith("gfx/terobjs/cheeserack") && cheeseRackInfo == null) {
 				cheeseRackInfo = new GobCheeseRackInfo(this);

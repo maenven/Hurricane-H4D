@@ -60,7 +60,21 @@ public class CattleId extends GAttrib implements RenderTree.Node, PView.Render2D
     private String lnm;
     private int lgrp;
     private Tex rnm;
+    /** H4D: screen pixels drawn above the anchor last frame (name + stats), for MilkShearMarkers. */
+    private volatile int drawnH = 0;
+    public int drawnHeight() {return(drawnH);}
+
     public void draw(GOut g, Pipe state) {
+	int dh = 0;
+	try {
+	    dh = draw0(g, state);
+	} finally {
+	    drawnH = dh;
+	}
+    }
+
+    private int draw0(GOut g, Pipe state) {
+	int dh = 0;
 	Coord sc = Homo3D.obj2view(new Coord3f(0, 0, 15), state, Area.sized(g.sz())).round2();
 	if(sc.isect(Coord.z, g.sz())) {
 	    Entry entry = entry();
@@ -76,6 +90,7 @@ public class CattleId extends GAttrib implements RenderTree.Node, PView.Render2D
 	    if((rnm != null) && (((wnd != null) && wnd.visible) || stats)) {
 		Coord nmc = sc.sub(rnm.sz().x / 2, 0);
 		g.aimage(rnm, sc, 0.5, 1.0);
+		dh = rnm.sz().y;
 		if((entry != null) && entry.mark.a)
 		    g.aimage(selectionMark, nmc.sub(selectionMark.sz().x, 0), 0.1, 1.3);
 	    }
@@ -98,8 +113,10 @@ public class CattleId extends GAttrib implements RenderTree.Node, PView.Render2D
 		    g.aimage(rstats[i], lc, 0.5, 1.0);
 		    lc = lc.sub(0, rstats[i].sz().y);
 		}
+		dh = sc.y - lc.y;
 	    }
 	}
+	return(dh);
     }
 
     private String lstats;
