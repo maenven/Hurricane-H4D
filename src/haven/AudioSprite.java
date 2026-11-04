@@ -74,6 +74,11 @@ public class AudioSprite {
 
 	public ClipSprite(Owner owner, Resource res, Audio.Clip clip) {
 	    super(owner, res);
+	    try { // H4D: milking sounds confirm a milking (MilkShearMarkers)
+		Gob g = null;
+		try {g = owner.context(Gob.class);} catch(Exception ignored) {}
+		haven.automated.MilkShearMarkers.noteSound(g, res.name);
+	    } catch(Exception ignored) {}
 		haven.Audio.CS stream = clip.stream();
         switch (res.name) {
             case "sfx/borka/clap":
@@ -161,6 +166,11 @@ public class AudioSprite {
 
 	public RepeatSprite(Owner owner, Resource res, Audio.Clip beg, List<Audio.Clip> clips, Audio.Clip end) {
 	    super(owner, res);
+	    try { // H4D: milking sounds confirm a milking (MilkShearMarkers)
+		Gob g = null;
+		try {g = owner.context(Gob.class);} catch(Exception ignored) {}
+		haven.automated.MilkShearMarkers.noteSound(g, res.name);
+	    } catch(Exception ignored) {}
 	    this.end = end;
 	    CS rep = new Audio.Repeater() {
 		    private boolean f = true;

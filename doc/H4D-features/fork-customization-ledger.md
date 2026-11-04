@@ -301,5 +301,5 @@ add an entry here. Procedure: [upstream-merge-workflow.md](upstream-merge-workfl
   `res/customclient/menugrid/Toggles/MilkShearMarkers.res`.
 - **Shared hooks:** `Gob.init` (attaches the marker), `MenuGrid` (Toggles button), `CattleId.draw`
   (records `drawnHeight()`), `MapView` right-click and `iteminteract` (milking detection), `GameUI.tick`,
-  `AreaMilker` (notes each milked animal), `FlowerMenu.sendChoice`.
+  `AreaMilker` (notes each milked animal), `FlowerMenu.sendChoice`, `AudioSprite` (milking sound).
 - **Detail:** [milk-shear-markers.md](milk-shear-markers.md).

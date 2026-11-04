@@ -189,15 +189,19 @@ public class MilkShearMarkers {
 	return(Math.min(l, 25.0));
     }
 
-    /* A milking the player started by hand: a bucket/container used on the animal, right-click with a
-     * barrel carried, or a "Milk" flower-menu option. The animal is marked milked right away (milking it empties
-     * it, and so does a "no milk" error); only an error about the container being full undoes it, since the
-     * animal then still has milk. */
+    /* A milking the player started by hand: a bucket/container used on the animal, a right-click with a barrel
+     * carried, or a "Milk" flower-menu option. It only counts once the game plays a sound for it (Ian: a sound
+     * plays when milking succeeds; a full barrel or bucket gives an error and no sound). A sound on the animal
+     * or the player, or a UI sound, within 30 s and before any error counts; an error that mentions milk but
+     * not "full" ("no milk") also counts, since the animal is empty either way. */
     private static class Pending {
-	final long id; final long start; final int errSeq; final Long prev;
-	Pending(long id, long start, int errSeq, Long prev) {this.id = id; this.start = start; this.errSeq = errSeq; this.prev = prev;}
+	final Gob gob; final long id; final long start; final int errSeq, sfxSeq;
+	Pending(Gob gob, long id, long start, int errSeq, int sfxSeq) {
+	    this.gob = gob; this.id = id; this.start = start; this.errSeq = errSeq; this.sfxSeq = sfxSeq;
+	}
     }
     private static volatile Pending pending = null;
+    private static volatile long playerId = -1;
     /** The animal last right-clicked, for a "Milk" flower-menu choice. */
     private static volatile Gob lastClicked = null;
 
@@ -216,8 +220,34 @@ public class MilkShearMarkers {
 	UID id = uid(gob);
 	if(id == null || !milkable(gob))
 	    return;
-	pending = new Pending(id.bits, System.currentTimeMillis(), gui.ui.serverErrorSeq, milkedAt.get(id.bits));
-	noteMilked(gob);
+	playerId = gui.map.plgob;
+	pending = new Pending(gob, id.bits, System.currentTimeMillis(), gui.ui.serverErrorSeq, gui.ui.serverSfxSeq);
+    }
+
+    private static boolean milkingSound(String name) {
+	if(name == null) return(false);
+	String n = name.toLowerCase(java.util.Locale.ROOT);
+	if(n.contains("milk") || n.contains("pour") || n.contains("liquid") || n.contains("splash") || n.contains("squirt")
+	   || n.contains("water") || n.contains("fill") || n.contains("drip"))
+	    return(true);
+	return(!n.contains("kritter")); // any other sound but the animals' own calls
+    }
+
+    private static void confirm(Pending p) {
+	pending = null;
+	milkedAt.put(p.id, System.currentTimeMillis());
+	saveMilked();
+    }
+
+    /** Called by AudioSprite when a positional sound starts on {@code gob} (null when unknown). */
+    public static void noteSound(Gob gob, String name) {
+	Pending p = pending;
+	if(p == null || System.currentTimeMillis() - p.start > 30000)
+	    return;
+	if(gob != null && gob != p.gob && gob.id != playerId)
+	    return;
+	if(milkingSound(name))
+	    confirm(p);
     }
 
     /** Called by MapView on a right-click on a gob. */
@@ -251,12 +281,12 @@ public class MilkShearMarkers {
 	    startMilking(gui, g);
     }
 
-    /** Called from GameUI.tick: undo a milking the server refused because the container is full. */
+    /** Called from GameUI.tick: watches for the UI milking sound or an error. */
     public static void tick(GameUI gui) {
 	Pending p = pending;
 	if(p == null)
 	    return;
-	if(System.currentTimeMillis() - p.start > 60000) {
+	if(System.currentTimeMillis() - p.start > 30000) {
 	    pending = null;
 	    return;
 	}
@@ -264,11 +294,12 @@ public class MilkShearMarkers {
 	    pending = null;
 	    String t = gui.ui.lastServerError;
 	    t = (t == null) ? "" : t.toLowerCase(java.util.Locale.ROOT);
-	    if(t.contains("full") || t.contains("no room") || t.contains("no space")) {
-		if(p.prev == null) milkedAt.remove(p.id); else milkedAt.put(p.id, p.prev);
-		saveMilked();
-	    }
+	    if(t.contains("milk") && !t.contains("full") && !t.contains("room") && !t.contains("space"))
+		confirm(p); // e.g. "no milk": empty now
+	    return;
 	}
+	if(gui.ui.serverSfxSeq != p.sfxSeq && milkingSound(gui.ui.lastServerSfx))
+	    confirm(p);
     }
 
     /* ---- Icons ---- */

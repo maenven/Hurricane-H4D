@@ -15,13 +15,16 @@ Markers (pref `milkShearMarkers`, off by default). Icons, not words (Ian, 2026-1
   (pref `milkShearMilkedAt` = `uidbits:epochms,...`, kept 3 days) and estimates the refill from the
   roster `milk` quantity: wiki (ringofbrodgar "Milk") says quantity * 0.01 L per 10 min, cap 25 L. The
   droplet shows once `MIN_LITERS` (0.1 L, the refill step per Ian; one step is enough to milk, e.g. for credo quests) has refilled; never-seen-milked animals count as having milk.
-  - **Milking is detected** from: the Milk Animals button (`AreaMilker` MILKED outcome); any held item used
-    on a lactating animal except shears (`MapView.iteminteract` → `noteItemAct`; the bucket is the usual one);
-    a right-click (Shift or not; plain right-click is how Ian milks with a carried barrel) on it while carrying something (`MapView` RMB hook → `noteClick`); a flower-menu
-    option containing "milk" after right-clicking it (`FlowerMenu.sendChoice` → `noteFlowerChoice`). The
-    animal is marked milked **immediately** (a "no milk" error also means empty); only a server error about
-    the container being full within 60 s undoes it (`tick`, from `GameUI.tick`). An earlier version waited
-    for the character to stand still with no error, and bucket milking never got counted (Ian, 2026-11-04).
+  - **Milking is detected** from: the Milk Animals button (`AreaMilker` MILKED outcome), or a manual
+    attempt (any held item except shears used on a lactating animal → `MapView.iteminteract` → `noteItemAct`;
+    a right-click on it while carrying something, i.e. a barrel over the head → `noteClick`; a flower-menu
+    option containing "milk" → `noteFlowerChoice`) **confirmed by a sound** (Ian: the game plays one when
+    milking succeeds; a full barrel/bucket gives an error and no sound). Within 30 s and before any server
+    error: a positional sound (`AudioSprite.ClipSprite`/`RepeatSprite` ctor → `noteSound`) on the animal, the
+    player or with no gob, or a UI `sfx` (`UI.lastServerSfx`), whose name has milk/pour/water/... or anything
+    but `kritter` (the exact milking sound name is not known). An error mentioning "milk" but not "full"
+    ("no milk") also counts. History (Ian, 2026-11-04): waiting for "idle + no error" missed bucket milking;
+    marking on the click hid the droplet after a "barrel is full" attempt.
   - Only memorized animals, and only after the Cattle Roster has been opened this session.
 - **Drawing:** `MilkShearMarkers.Marker` (GAttrib, Render2D) is attached in `Gob.init` to cattle, goats,
   sheep and reindeer. `ctick` recomputes every 0.5 s; `draw` anchors at the same point as `CattleId`
