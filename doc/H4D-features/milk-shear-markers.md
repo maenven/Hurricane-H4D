@@ -15,11 +15,13 @@ Markers (pref `milkShearMarkers`, off by default). Icons, not words (Ian, 2026-1
   (pref `milkShearMilkedAt` = `uidbits:epochms,...`, kept 3 days) and estimates the refill from the
   roster `milk` quantity: wiki (ringofbrodgar "Milk") says quantity * 0.01 L per 10 min, cap 25 L. The
   droplet shows once `MIN_LITERS` (1 L) has refilled; never-seen-milked animals count as having milk.
-  - **Milking is detected** from: the Milk Animals button (`AreaMilker` MILKED outcome); a Shift+right-click
-    on a lactating animal while carrying something (`MapView` RMB hook → `noteClick`); an item used on it
-    whose resource name looks like a container (bucket/barrel/cup/jug/waterskin/flask/...; `MapView.iteminteract`
-    → `noteItemAct`). The manual cases count once the character stands still again with no server error
-    (`tick`, from `GameUI.tick`); an error ("no milk", "barrel full") cancels it.
+  - **Milking is detected** from: the Milk Animals button (`AreaMilker` MILKED outcome); any held item used
+    on a lactating animal except shears (`MapView.iteminteract` → `noteItemAct`; the bucket is the usual one);
+    a Shift+right-click on it while carrying something (`MapView` RMB hook → `noteClick`); a flower-menu
+    option containing "milk" after right-clicking it (`FlowerMenu.sendChoice` → `noteFlowerChoice`). The
+    animal is marked milked **immediately** (a "no milk" error also means empty); only a server error about
+    the container being full within 60 s undoes it (`tick`, from `GameUI.tick`). An earlier version waited
+    for the character to stand still with no error, and bucket milking never got counted (Ian, 2026-11-04).
   - Only memorized animals, and only after the Cattle Roster has been opened this session.
 - **Drawing:** `MilkShearMarkers.Marker` (GAttrib, Render2D) is attached in `Gob.init` to cattle, goats,
   sheep and reindeer. `ctick` recomputes every 0.5 s; `draw` anchors at the same point as `CattleId`

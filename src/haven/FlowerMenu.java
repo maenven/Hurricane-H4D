@@ -342,6 +342,7 @@ public class FlowerMenu extends Widget {
     private void sendChoice(Petal option, int modflags) {
 	if(ui == null || parent == null)
 	    return;
+	haven.automated.MilkShearMarkers.noteFlowerChoice(ui.gui, option.name); // H4D
 	if(AutoRepeatFlowerMenuScript.option != null){
 		AutoRepeatFlowerMenuScript.option = option.name;
 	}

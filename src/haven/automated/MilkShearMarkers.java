@@ -188,19 +188,17 @@ public class MilkShearMarkers {
 	return(Math.min(l, 25.0));
     }
 
-    /* A milking the player started by hand: Shift+right-click with a barrel carried, or a bucket/container
-     * used on the animal. It counts once the character stands still again without a server error. */
+    /* A milking the player started by hand: a bucket/container used on the animal, Shift+right-click with a
+     * barrel carried, or a "Milk" flower-menu option. The animal is marked milked right away (milking it empties
+     * it, and so does a "no milk" error); only an error about the container being full undoes it, since the
+     * animal then still has milk. */
     private static class Pending {
-	final Gob gob; final long start; final int errSeq;
-	Pending(Gob gob, long start, int errSeq) {this.gob = gob; this.start = start; this.errSeq = errSeq;}
+	final long id; final long start; final int errSeq; final Long prev;
+	Pending(long id, long start, int errSeq, Long prev) {this.id = id; this.start = start; this.errSeq = errSeq; this.prev = prev;}
     }
     private static volatile Pending pending = null;
-
-    private static boolean milkContainer(String res) {
-	if(res == null) return(false);
-	return(res.contains("bucket") || res.contains("barrel") || res.contains("cup") || res.contains("jug")
-	       || res.contains("waterskin") || res.contains("flask") || res.contains("kuksa") || res.contains("pitcher"));
-    }
+    /** The animal last right-clicked, for a "Milk" flower-menu choice. */
+    private static volatile Gob lastClicked = null;
 
     private static boolean carriesSomething(GameUI gui) {
 	long pl = gui.map.plgob;
@@ -213,51 +211,62 @@ public class MilkShearMarkers {
 	return(false);
     }
 
-    /** Called by MapView on a right-click on a gob. */
-    public static void noteClick(GameUI gui, Gob gob, boolean shift) {
-	if(gui == null || gob == null || !shift || !milkable(gob) || !carriesSomething(gui))
+    private static void startMilking(GameUI gui, Gob gob) {
+	UID id = uid(gob);
+	if(id == null || !milkable(gob))
 	    return;
-	pending = new Pending(gob, System.currentTimeMillis(), gui.ui.serverErrorSeq);
+	pending = new Pending(id.bits, System.currentTimeMillis(), gui.ui.serverErrorSeq, milkedAt.get(id.bits));
+	noteMilked(gob);
     }
 
-    /** Called by MapView when the held item is used on a gob. */
+    /** Called by MapView on a right-click on a gob. */
+    public static void noteClick(GameUI gui, Gob gob, boolean shift) {
+	if(gui == null || gob == null)
+	    return;
+	lastClicked = gob;
+	if(shift && milkable(gob) && carriesSomething(gui))
+	    startMilking(gui, gob);
+    }
+
+    /** Called by MapView when the held item is used on a gob. Any held item counts: milking (bucket, barrel,
+     * cup, ...) is the only thing an item does to a lactating animal, apart from shears. */
     public static void noteItemAct(GameUI gui, Gob gob) {
-	if(gui == null || gob == null || !milkable(gob) || gui.vhand == null)
+	if(gui == null || gob == null || !milkable(gob))
 	    return;
 	String res = null;
 	try {
-	    res = gui.vhand.item.getres().name;
+	    if(gui.vhand != null)
+		res = gui.vhand.item.getres().name;
 	} catch(Loading ignored) {}
-	if(!milkContainer(res))
+	if(res != null && res.contains("shears"))
 	    return;
-	pending = new Pending(gob, System.currentTimeMillis(), gui.ui.serverErrorSeq);
+	startMilking(gui, gob);
     }
 
-    private static long idleSince = -1;
-    /** Called from GameUI.tick. */
+    /** Called by FlowerMenu when an option is chosen. */
+    public static void noteFlowerChoice(GameUI gui, String option) {
+	Gob g = lastClicked;
+	if(gui != null && g != null && option != null && option.toLowerCase(java.util.Locale.ROOT).contains("milk"))
+	    startMilking(gui, g);
+    }
+
+    /** Called from GameUI.tick: undo a milking the server refused because the container is full. */
     public static void tick(GameUI gui) {
 	Pending p = pending;
-	if(p == null || gui.map == null)
+	if(p == null)
 	    return;
-	long now = System.currentTimeMillis();
-	if(gui.ui.serverErrorSeq != p.errSeq || now - p.start > 45000) {
-	    pending = null; // "no milk", "barrel is full", gave up: not counted
-	    return;
-	}
-	Gob pl = gui.map.player();
-	boolean busy = (pl != null && pl.getv() > 0) || gui.prog != null;
-	if(busy || now - p.start < 1500) {
-	    idleSince = -1;
-	    return;
-	}
-	if(idleSince < 0) {
-	    idleSince = now;
-	    return;
-	}
-	if(now - idleSince > 1000) {
+	if(System.currentTimeMillis() - p.start > 60000) {
 	    pending = null;
-	    idleSince = -1;
-	    noteMilked(p.gob);
+	    return;
+	}
+	if(gui.ui.serverErrorSeq != p.errSeq) {
+	    pending = null;
+	    String t = gui.ui.lastServerError;
+	    t = (t == null) ? "" : t.toLowerCase(java.util.Locale.ROOT);
+	    if(t.contains("full") || t.contains("no room") || t.contains("no space")) {
+		if(p.prev == null) milkedAt.remove(p.id); else milkedAt.put(p.id, p.prev);
+		saveMilked();
+	    }
 	}
     }
 
