@@ -1,6 +1,7 @@
 package haven.automated;
 
 import haven.*;
+import haven.automated.helpers.ClientMenu;
 
 import java.awt.Color;
 import java.util.function.BooleanSupplier;
@@ -8,9 +9,9 @@ import java.util.function.BooleanSupplier;
 import static haven.OCache.posres;
 
 /**
- * Menu-grid button (Other Scripts & Tools) "Fill Barrels from Vehicle": click a source (a well, a
- * cistern, a milling machine — anything that fills a carried barrel when you Shift+Right-Click it),
- * then click the cart, wagon, snekkja or knarr that holds the barrels. The character takes every
+ * Ctrl+Right-Click on a well, cistern or mill → "Fill barrels from a vehicle", then click the cart,
+ * wagon, snekkja or knarr that holds the barrels (or Ctrl+Right-Click the cart/wagon → "Fill barrels
+ * at a well/cistern/mill", then click the source). The character takes every
  * object out of the vehicle one at a time; each empty barrel is filled at the source, and
  * everything goes back into the vehicle.
  *
@@ -65,47 +66,77 @@ public class VehicleBarrelFiller implements Runnable {
 	// UI thread
 	// ---------------------------------------------------------------------------------------
 
-	/** The menu-grid button. Pressing it while a run is going stops the run. */
-	public static void menuButton(GameUI gui) {
-		if (gui == null || gui.map == null)
-			return;
+	/**
+	 * Called from MapView for Ctrl+Right-Click on a gob. On a well, cistern or mill it opens a
+	 * client-side menu ("Fill barrels from a vehicle", or "Stop" while a run is going) and returns
+	 * true, in which case the click must not be sent to the server. Shares the
+	 * cart/wagon load/unload option.
+	 */
+	public static boolean ctrlRightClick(GameUI gui, Gob gob) {
+		if (gui == null || gob == null || gui.map == null)
+			return false;
+		if (OptWnd.vehicleAreaTransferCheckBox == null || !OptWnd.vehicleAreaTransferCheckBox.a)
+			return false;
+		if (gui.vhand != null)
+			return false;
+		String name = resName(gob);
+		if (!isSource(name))
+			return false;
 		if (isRunning()) {
-			stop(gui, true);
-			return;
+			gui.add(new ClientMenu(new String[]{"Stop filling barrels"}, idx -> stop(gui, true)), new Coord(-1, -1));
+			return true;
 		}
-		if (gui.vhand != null) {
-			gui.error("Put down the item on your cursor first.");
-			return;
-		}
-		gui.map.startClientGobPick(src -> sourcePicked(gui, src));
-		gui.msg("Fill barrels: click the well, cistern or milling machine to fill from. Right-click cancels.", Color.WHITE);
+		// Carrying something: leave the click alone.
+		if (carriedBy(gui) != null)
+			return false;
+		final long sourceId = gob.id;
+		final String sourceName = prettyName(name);
+		gui.add(new ClientMenu(new String[]{"Fill barrels from a vehicle"}, idx -> {
+			gui.map.startClientGobPick(veh -> vehiclePicked(gui, sourceId, sourceName, veh));
+			gui.msg("Click the cart, wagon, snekkja or knarr holding the barrels. Right-click cancels.", Color.WHITE);
+		}), new Coord(-1, -1));
+		return true;
 	}
 
-	private static void sourcePicked(GameUI gui, Gob src) {
-		String name = resName(src);
-		if (name == null) {
-			gui.error("Couldn't tell what that is. Try again.");
+	/** From the cart/wagon Ctrl+Right-Click menu: pick the source for this vehicle's barrels. */
+	public static void pickSourceFor(GameUI gui, long vehicleId) {
+		if (isRunning()) {
+			gui.error("Already filling barrels. Ctrl+Right-Click the well, cistern or mill to stop.");
 			return;
 		}
-		if (isVehicle(name)) {
-			gui.error("That's a vehicle. Press the button again and click the well, cistern or mill first.");
-			return;
-		}
-		final long sourceId = src.id;
-		final String sourceName = prettyName(name);
-		gui.map.startClientGobPick(veh -> vehiclePicked(gui, sourceId, sourceName, veh));
-		gui.msg("Now click the cart, wagon, snekkja or knarr holding the barrels. Right-click cancels.", Color.WHITE);
+		gui.map.startClientGobPick(src -> {
+			String name = resName(src);
+			if (!isSource(name)) {
+				gui.error("That isn't a well, cistern or mill.");
+				return;
+			}
+			Gob veh = gui.map.glob.oc.getgob(vehicleId);
+			if (veh == null) {
+				gui.error("The vehicle is out of sight.");
+				return;
+			}
+			vehiclePicked(gui, src.id, prettyName(name), veh);
+		});
+		gui.msg("Click the well, cistern or mill to fill the barrels at. Right-click cancels.", Color.WHITE);
+	}
+
+	/** Wells, cisterns and mills: the objects that get the "Fill barrels" Ctrl+Right-Click menu. */
+	public static boolean isSource(String res) {
+		if (res == null || !res.startsWith("gfx/terobjs/") || res.startsWith("gfx/terobjs/arch/"))
+			return false;
+		String base = res.substring(res.lastIndexOf('/') + 1);
+		return base.equals("well") || base.contains("cistern") || base.contains("mill") || base.contains("quern");
 	}
 
 	private static void vehiclePicked(GameUI gui, long sourceId, String sourceName, Gob veh) {
 		if (!isVehicle(resName(veh))) {
-			gui.error("That isn't a cart, wagon, snekkja or knarr. Press the button to start over.");
+			gui.error("That isn't a cart, wagon, snekkja or knarr. Ctrl+Right-Click the " + sourceName + " to start over.");
 			return;
 		}
 		stop(gui, false);
 		Thread t = new Thread(new VehicleBarrelFiller(gui, sourceId, sourceName, veh.id), "VehicleBarrelFiller");
 		running = t;
-		gui.msg("Filling the " + vehicleName(resName(veh)) + "'s barrels at the " + sourceName + ". Press the button again to stop.", Color.WHITE);
+		gui.msg("Filling the " + vehicleName(resName(veh)) + "'s barrels at the " + sourceName + ". Ctrl+Right-Click the " + sourceName + " to stop.", Color.WHITE);
 		t.start();
 	}
 
@@ -328,6 +359,10 @@ public class VehicleBarrelFiller implements Runnable {
 	}
 
 	private Gob carried() {
+		return carriedBy(gui);
+	}
+
+	private static Gob carriedBy(GameUI gui) {
 		long plgob = gui.map.plgob;
 		if (plgob < 0)
 			return null;

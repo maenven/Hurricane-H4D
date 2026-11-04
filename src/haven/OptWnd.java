@@ -5670,13 +5670,17 @@ public class OptWnd extends Window {
 			"\n" +
 			"\n$col[218,163,0]{Action Button:} $col[185,185,185]{This setting can also be turned on/off using an action button from the menu grid (Custom Client Extras → Toggles).}", UI.scale(320));
 	private static final Object enableQueuedMovementTooltip = RichText.render("$col[218,163,0]{Action Button:} $col[185,185,185]{This setting can also be turned on/off using an action button from the menu grid (Custom Client Extras → Toggles).}", UI.scale(300));
-    private static final Object vehicleAreaTransferTooltip = RichText.render("Hold Ctrl and Right-Click a cart or a wagon (with nothing lifted) to get two choices:" +
+    private static final Object vehicleAreaTransferTooltip = RichText.render("Hold Ctrl and Right-Click a cart or a wagon (with nothing lifted) to get three choices:" +
             "\n" +
             "\n$col[218,163,0]{Load from area:} $col[185,185,185]{drag a rectangle over the objects you want loaded, pick which kind of object if there are several, and they get lifted into the vehicle one by one until it is full or the area is empty.}" +
             "\n$col[218,163,0]{Unload into area:} $col[185,185,185]{drag a rectangle where the cargo should go, and it gets taken out and set down in free spots inside it.}" +
             "\n" +
+            "\n$col[218,163,0]{Fill barrels at a well/cistern/mill:} $col[185,185,185]{click the source, and every empty barrel in the vehicle is taken out, filled there and put back.}" +
+            "\n" +
+            "\nCtrl+Right-Click on a well, cistern or mill offers the same barrel filling: pick it, then click the cart, wagon, snekkja or knarr. Ctrl+Right-Click the source again while it runs to stop." +
+            "\n" +
             "\nRight-click cancels the area selection. Ctrl+Right-Click the vehicle again while it runs to stop it." +
-            "\nWith this off, Ctrl+Right-Click on carts and wagons behaves as before.", UI.scale(320));
+            "\nWith this off, Ctrl+Right-Click on carts, wagons, wells, cisterns and mills behaves as before.", UI.scale(320));
     private static final Object autoEquipCuttingToolTooltip = RichText.render("When you choose $col[218,163,0]{Butcher} on an animal, or $col[218,163,0]{Split} on a block of wood, your highest quality cutting tool is put in your hand first." +
             "\n" +
             "\nCutting tools: axes (Stone, Metal, Woodsman's, Tinker's Throwing), knives (Flint, Ceramic), Obsidian Dagger, Butcher's Cleaver and swords (Bronze, Fyrdsman's, Hirdsman's). They're taken from your inventory or belt, and the item that was in that hand goes where the tool was." +

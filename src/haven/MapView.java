@@ -2437,6 +2437,10 @@ public class MapView extends PView implements DTarget, Console.Directory, PFList
 				if (clickb == 3 && ui.modctrl && !ui.modshift && !ui.modmeta && VehicleAreaTransfer.ctrlRightClick(ui.gui, gob)) {
 					return;
 				}
+				// H4D: Ctrl+Right-Click on a well, cistern or mill opens the fill-barrels-from-a-vehicle menu.
+				if (clickb == 3 && ui.modctrl && !ui.modshift && !ui.modmeta && haven.automated.VehicleBarrelFiller.ctrlRightClick(ui.gui, gob)) {
+					return;
+				}
 				if (clickb == 3) { // Right Click
 					if (OptWnd.autoSwitchBootsCheckBox.a) {
 						switchBunnySlippersAndArmorBoots(gob);

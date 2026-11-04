@@ -1,16 +1,19 @@
 # Fill barrels from a vehicle at a well / cistern / mill
 
-Menu-grid button *Fill Barrels from Vehicle* (Other Scripts & Tools, `MenuGrid.useCustom` →
-`VehicleBarrelFiller.menuButton`). Port of Nurgling2's `contextmenu/FillBarrelsFromVehicleAction`
-+ `actions/TakeFromVehicleSlot`. Pressing the button while it runs stops it.
+Ctrl+Right-Click on a well, cistern or mill (`VehicleBarrelFiller.isSource`: `gfx/terobjs/` but not
+`arch/`, base name `well` or containing `cistern`/`mill`/`quern`) opens a `ClientMenu` with *Fill
+barrels from a vehicle*; then click the vehicle. The cart/wagon Ctrl+Right-Click menu
+(`VehicleAreaTransfer`) has a third choice *Fill barrels at a well/cistern/mill* that asks for the
+source instead. Both are gated by the same option as load/unload
+(`OptWnd.vehicleAreaTransferCheckBox`). While a run is going, Ctrl+Right-Click on a source offers
+*Stop*. Ian asked for this instead of a menu-grid button (2026-11-04). Port of Nurgling2's
+`contextmenu/FillBarrelsFromVehicleAction` + `actions/TakeFromVehicleSlot`.
 
 ## Picking
 
 `MapView.startClientGobPick(cb)`: the next left-click on a gob goes to `cb` instead of the server
 (hooked at the top of `MapView.Click.hit`); left-clicks on bare ground are swallowed; right-click
-cancels. One pick for the source (anything that isn't a vehicle), then one for the vehicle. A menu
-button was chosen over Ctrl+Right-Click on the source because Ctrl+RMB already means something on
-some objects (e.g. candelabra).
+cancels. Used for the second object (vehicle or source).
 
 ## Vehicles
 
