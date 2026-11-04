@@ -2099,6 +2099,7 @@ public class OptWnd extends Window {
 	public static CheckBox showBarrelContentsTextCheckBox;
 	public static CheckBox showIconSignTextCheckBox;
     public static CheckBox showProduceSackTextCheckBox;
+    public static CheckBox showProcessTimersCheckBox; // H4D
 	public static CheckBox showCheeseRacksTierTextCheckBox;
 	public static CheckBox highlightCliffsCheckBox;
 	public static ColorOptionWidget highlightCliffsColorOptionWidget;
@@ -2880,6 +2881,16 @@ public class OptWnd extends Window {
                 }
             }, rightColumn.pos("bl").adds(0, 2));
             showProduceSackTextCheckBox.tooltip = showProduceSackTextTooltip;
+            rightColumn = add(showProcessTimersCheckBox = new CheckBox("Show Smelter/Oven Timers"){ // H4D
+                {a = (Utils.getprefb("showProcessTimers", true));}
+                public void changed(boolean val) {
+                    Utils.setprefb("showProcessTimers", val);
+                    if (ui != null && ui.gui != null){
+                        ui.gui.optionInfoMsg("Smelter/Oven Timers are now " + (val ? "SHOWN" : "HIDDEN") + "!", (val ? msgGreen : msgGray), Audio.resclip(val ? Toggle.sfxon : Toggle.sfxoff));
+                    }
+                }
+            }, rightColumn.pos("bl").adds(0, 2));
+            showProcessTimersCheckBox.tooltip = showProcessTimersTooltip;
 			rightColumn = add(showCheeseRacksTierTextCheckBox = new CheckBox("Show Cheese Racks Tier Text"){
 				{a = (Utils.getprefb("showCheeseRacksTierText", false));}
 				public void changed(boolean val) {
@@ -5584,6 +5595,12 @@ public class OptWnd extends Window {
 	private static final Object showIconSignTextTooltip = RichText.render("This adds text on top of icon signs, that shows the name of the currently displayed icon. Empty signs won't show any text." +
 			"\n" +
 			"\n$col[218,163,0]{Keybind:} $col[185,185,185]{This can also be toggled using a keybind.}", UI.scale(300));
+    private static final Object showProcessTimersTooltip = RichText.render("Shows how long until smelters, stack furnaces, finery forges, ovens, kilns, crucibles and smoke sheds finish." + // H4D
+            "\n" +
+            "\nOpen the object once to start its timer; it keeps counting down after you close the window. " +
+            "Smelters and finery forges know their times right away; for the others the client learns the time by watching the progress tick for about a minute, then remembers it." +
+            "\n" +
+            "\n$col[185,185,185]{Smelters and stack furnaces pause their timer while unlit. Other objects can't be checked for fuel, so refuel and reopen them if the fire went out.}", UI.scale(300));
     private static final Object showProduceSackTextTooltip = RichText.render("This adds text on top of produce sacks, that shows the name of the currently displayed icon. Empty sacks won't show any text." +
             "\n" +
             "\n$col[218,163,0]{Keybind:} $col[185,185,185]{This can also be toggled using a keybind.}", UI.scale(300));
