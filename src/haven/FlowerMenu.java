@@ -27,6 +27,7 @@
 package haven;
 
 import haven.automated.AutoRepeatFlowerMenuScript;
+import haven.automated.CuttingToolAutoEquip;
 
 import java.awt.Color;
 import java.awt.Font;
@@ -271,6 +272,8 @@ public class FlowerMenu extends Widget {
     }
 
     public boolean mousedown(MouseDownEvent ev) {
+	if(equippingTool)
+	    return(true);
 	if(!anims.isEmpty())
 	    return(true);
 	if(!ev.propagate(this))
@@ -295,6 +298,8 @@ public class FlowerMenu extends Widget {
     }
 
     public boolean keydown(KeyDownEvent ev) {
+	if(equippingTool)
+	    return(true);
 	if((ev.c >= '0') && (ev.c <= '9')) {
 	    int opt = (ev.c == '0') ? 9 : (ev.c - '1');
 	    if(opt < opts.length) {
@@ -314,11 +319,43 @@ public class FlowerMenu extends Widget {
 	if(option == null) {
 	    wdgmsg("cl", -1);
 	} else {
-		if(AutoRepeatFlowerMenuScript.option != null){
-			AutoRepeatFlowerMenuScript.option = option.name;
+		final CuttingToolAutoEquip.Policy toolPolicy = equippingTool ? null : CuttingToolAutoEquip.policyFor(option.name);
+		if(toolPolicy != null && !CuttingToolAutoEquip.consumeReplay(option.name)
+				&& CuttingToolAutoEquip.needsSwap(ui.gui, toolPolicy) && CuttingToolAutoEquip.canReplay()) {
+			// H4D: close the menu, put the best cutting tool in hand (the server won't move items while a
+			// flower menu is open), then right-click the same thing again and pick the same option.
+			equippingTool = true;
+			wdgmsg("cl", -1);
+			final GameUI gui = ui.gui;
+			final String name = option.name;
+			Thread t = new Thread(() -> {
+				try {
+					Thread.sleep(100);
+				} catch (InterruptedException e) {
+					return;
+				}
+				CuttingToolAutoEquip.equipBest(gui, toolPolicy);
+				if(!CuttingToolAutoEquip.replay(name))
+					gui.ui.msg("Tool equipped, choose " + name + " again.");
+			}, "CuttingToolAutoEquip");
+			t.setDaemon(true);
+			t.start();
+			return;
 		}
-	    wdgmsg("cl", option.num, ui.modflags());
+		sendChoice(option, ui.modflags());
 	}
+    }
+
+    private boolean equippingTool = false;
+
+    private void sendChoice(Petal option, int modflags) {
+	if(ui == null || parent == null)
+	    return;
+	haven.automated.MilkShearMarkers.noteFlowerChoice(ui.gui, option.name); // H4D
+	if(AutoRepeatFlowerMenuScript.option != null){
+		AutoRepeatFlowerMenuScript.option = option.name;
+	}
+	wdgmsg("cl", option.num, modflags);
     }
 
 	public static void setNextSelection(String name) {

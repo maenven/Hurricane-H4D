@@ -16,5 +16,20 @@ Small, single-topic files. Read only the ones relevant to the current task — d
 | [group-permission-extension.md](group-permission-extension.md) | Touching `BuddyWnd.GroupSelector`, Kin/Village/claim/Field-Cairn permission groups, or `haven.groups.*`. |
 | [portrait-performance.md](portrait-performance.md) | Lag/low FPS in big parties or fights, `Avaview` / Party widget / portraits, the "Disable 3D Portraits" option. |
 | [auto-kin.md](auto-kin.md) | Auto Kin: sharing hearth secrets through the Web Map server, the `/kinSecret(s)` contract, `AutoKin` / `BuddyWnd` hooks. |
+| [vehicle-area-transfer.md](vehicle-area-transfer.md) | Ctrl+Right-Click cart/wagon load/unload from an area: `VehicleAreaTransfer`, client-side `ClientMenu`, `MapView.selectAreaClientSide`. |
+| [area-fire-lighter.md](area-fire-lighter.md) | *Light Fires in Area* menu button (candelabrum/torchpost → light kilns/ovens/smoke sheds/fireplaces in an area): `AreaFireLighter`, fire bits per workstation. |
+| [area-shearer.md](area-shearer.md) | *Shear Animals in Area* menu button: tool choice (shears, else best axe), hand swap, flower-menu shearing loop in `AreaShearer`. |
+
+| [area-milker.md](area-milker.md) | *Milk Animals in Area* menu button (animal area + barrel area → milk into barrels, swap when full): `AreaMilker`, server error/sound hooks on `UI`. |
+| [craft-quantity.md](craft-quantity.md) | The crafting window's amount box / **Craft #** button (craft N items in a row) in `Makewindow`. |
+| [rock-crystal-guard.md](rock-crystal-guard.md) | The *Block Stone Actions while carrying Rock Crystal* option: `RockCrystalGuard`, the `UI.wdgmsg` hook. |
+| [village-member-sort.md](village-member-sort.md) | Village member list sort-by-group toggle and group filter (`Polity.MemberList`). |
+| [barrel-take-amount.md](barrel-take-amount.md) | Barrel window amount box / **Take #** button (take N units of flour, salt, cave dust…): `BarrelTakeAmount`, `Window.barrelTakeTick`, stacking toggle. |
+| [vehicle-barrel-filler.md](vehicle-barrel-filler.md) | Ctrl+Right-Click *Fill barrels* on a well/cistern/mill (or cart/wagon) with a cart/wagon/snekkja/knarr: `VehicleBarrelFiller`, `MapView.startClientGobPick`. |
+
+| [animal-stats-overhead.md](animal-stats-overhead.md) | Memorized animal stats (Q/B/M) above heads and best-stat green highlight: `AnimalStatsOverlay`, `CattleId`, Cattle Roster entries. |
+| [auto-butcher.md](auto-butcher.md) | *Auto Butcher* window (stat + limit + genders + area → slaughter and butcher every memorized animal below the limit): `AutoButcher`. |
+| [milk-shear-markers.md](milk-shear-markers.md) | Wool icon over shearable animals, crossed-out milk droplet over just-milked ones (`MilkShearMarkers`; `-fleece` model part, milking sound / refusal). |
+| [process-timers.md](process-timers.md) | Finish timers above smelters/ovens/kilns/crucibles (`ProcessTimers`, `ProcessTimerGobInfo`, window→gob link, learned durations). |
 
 Tools: [tools/New-MenuGridButton.ps1](tools/New-MenuGridButton.ps1) — generates a menu-grid `.res` file by splicing a name/tooltip/description into an existing button's icon, without needing the (unavailable) official resource editor.

@@ -55,10 +55,26 @@ public class CattleId extends GAttrib implements RenderTree.Node, PView.Render2D
 	return(entry);
     }
 
+    public CattleRoster<?> roster() {return(roster);}
+
     private String lnm;
     private int lgrp;
     private Tex rnm;
+    /** H4D: screen pixels drawn above the anchor last frame (name + stats), for MilkShearMarkers. */
+    private volatile int drawnH = 0;
+    public int drawnHeight() {return(drawnH);}
+
     public void draw(GOut g, Pipe state) {
+	int dh = 0;
+	try {
+	    dh = draw0(g, state);
+	} finally {
+	    drawnH = dh;
+	}
+    }
+
+    private int draw0(GOut g, Pipe state) {
+	int dh = 0;
 	Coord sc = Homo3D.obj2view(new Coord3f(0, 0, 15), state, Area.sized(g.sz())).round2();
 	if(sc.isect(Coord.z, g.sz())) {
 	    Entry entry = entry();
@@ -70,12 +86,40 @@ public class CattleId extends GAttrib implements RenderTree.Node, PView.Render2D
 		lnm = name;
 		lgrp = grp;
 	    }
-	    if((rnm != null) && (wnd != null) && wnd.visible) {
+	    boolean stats = (entry != null) && haven.automated.AnimalStatsOverlay.enabled();
+	    if((rnm != null) && (((wnd != null) && wnd.visible) || stats)) {
 		Coord nmc = sc.sub(rnm.sz().x / 2, 0);
 		g.aimage(rnm, sc, 0.5, 1.0);
+		dh = rnm.sz().y;
 		if((entry != null) && entry.mark.a)
 		    g.aimage(selectionMark, nmc.sub(selectionMark.sz().x, 0), 0.1, 1.3);
 	    }
+	    if(stats) { // H4D: memorized animal stats above the name (AnimalStatsOverlay)
+		String txt = haven.automated.AnimalStatsOverlay.text(entry);
+		Color hl = haven.automated.AnimalStatsOverlay.colorOf(entry);
+		if((rstats == null) || !txt.equals(lstats) || !java.util.Objects.equals(hl, lcol)) {
+		    for(Tex t : (rstats == null) ? new Tex[0] : rstats)
+			t.dispose();
+		    Color col = (hl != null) ? hl : Color.WHITE;
+		    String[] lines = txt.isEmpty() ? new String[0] : txt.split("\n");
+		    rstats = new Tex[lines.length];
+		    for(int i = 0; i < lines.length; i++)
+			rstats[i] = new TexI(rasterimg(blurmask2(Utils.outline2(fnd.render(lines[i], col).img, Color.BLACK, true).getRaster(), UI.rscale(1.0), UI.rscale(1.0), Color.BLACK)));
+		    lstats = txt;
+		    lcol = hl;
+		}
+		Coord lc = sc.sub(0, (rnm != null) ? rnm.sz().y : 0);
+		for(int i = rstats.length - 1; i >= 0; i--) { // last line sits right above the name
+		    g.aimage(rstats[i], lc, 0.5, 1.0);
+		    lc = lc.sub(0, rstats[i].sz().y);
+		}
+		dh = sc.y - lc.y;
+	    }
 	}
+	return(dh);
     }
+
+    private String lstats;
+    private Color lcol;
+    private Tex[] rstats;
 }

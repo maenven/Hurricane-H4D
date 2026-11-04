@@ -39,6 +39,7 @@ import java.util.stream.Collectors;
 
 import haven.automated.MiningSafetyAssistant;
 import haven.automated.helpers.AreaSelectCallback;
+import haven.automated.VehicleAreaTransfer;
 import haven.automated.pathfinder.PFListener;
 import haven.automated.pathfinder.Pathfinder;
 import haven.render.*;
@@ -2371,6 +2372,8 @@ public class MapView extends PView implements DTarget, Console.Directory, PFList
 	}
 	
 	protected void hit(Coord pc, Coord2d mc, ClickData inf) {
+		if (clientGobPick != null && clientGobPickHit(clickb, inf)) // H4D: see startClientGobPick
+			return;
 		int modflags = ui.modflags();
 		if (OptWnd.overrideCursorItemWhenHoldingAltCheckBox.a && ui.gui != null && ui.gui.vhand != null && clickb == 1)
 			modflags = modflags & ~ 4;
@@ -2430,7 +2433,17 @@ public class MapView extends PView implements DTarget, Console.Directory, PFList
 						switchToArmorBoots();
 					}
 				}
+				// H4D: Ctrl+Right-Click on a cart or wagon opens the load/unload-from-area menu.
+				if (clickb == 3 && ui.modctrl && !ui.modshift && !ui.modmeta && VehicleAreaTransfer.ctrlRightClick(ui.gui, gob)) {
+					return;
+				}
+				// H4D: Ctrl+Right-Click on a well, cistern or mill opens the fill-barrels-from-a-vehicle menu.
+				if (clickb == 3 && ui.modctrl && !ui.modshift && !ui.modmeta && haven.automated.VehicleBarrelFiller.ctrlRightClick(ui.gui, gob)) {
+					return;
+				}
 				if (clickb == 3) { // Right Click
+					ProcessTimers.noteInteract(gob); // H4D: link the window that opens to this gob
+					haven.automated.MilkShearMarkers.noteClick(ui.gui, gob, ui.modshift); // H4D: milking with a carried barrel
 					if (OptWnd.autoSwitchBootsCheckBox.a) {
 						switchBunnySlippersAndArmorBoots(gob);
 					}
@@ -2443,6 +2456,7 @@ public class MapView extends PView implements DTarget, Console.Directory, PFList
                             pfthread.interrupt();
                         }
                     }
+					haven.automated.CuttingToolAutoEquip.noteGobMenu(MapView.this, args); // H4D: to reopen the menu after a tool swap
 					wdgmsg("click", args);
 					if (OptWnd.autoSelect1stFlowerMenuCheckBox.a) {
 						if (ui.modctrl) {
@@ -2717,8 +2731,14 @@ public class MapView extends PView implements DTarget, Console.Directory, PFList
 	new Hittest(cc) {
 	    public void hit(Coord pc, Coord2d mc, ClickData inf) {
 		Object[] args = {pc, mc.floor(posres), ui.modflags()};
-		if(inf != null)
+		if(inf != null) {
 		    args = Utils.extend(args, inf.clickargs());
+		    try { // H4D: milking with a bucket or other container
+			Object[] ca = inf.clickargs();
+			if(ca.length > 1 && ca[1] instanceof Integer)
+			    haven.automated.MilkShearMarkers.noteItemAct(ui.gui, glob.oc.getgob(((Integer)ca[1]).longValue()));
+		    } catch(Exception ignored) {}
+		}
 		wdgmsg("itemact", args);
 	    }
 	}.run();
@@ -2820,6 +2840,10 @@ public class MapView extends PView implements DTarget, Console.Directory, PFList
 	private Text tt;
 	final GrabXL xl = new GrabXL(this) {
 		public boolean mmousedown(Coord cc, int button) {
+		    if((button == 3) && (clientCallback != null)) {
+			cancelClientAreaSelect();
+			return(true);
+		    }
 		    if(button != 1)
 			return(false);
 		    return(super.mmousedown(cc, button));
@@ -2836,6 +2860,10 @@ public class MapView extends PView implements DTarget, Console.Directory, PFList
 	public Selector(Coord max) {
 	    this.max = max;
 	}
+
+	/* H4D: set for selections the client starts itself (see selectAreaClientSide); the result
+	 * goes to this callback and is never sent to the server as a "sel" message. */
+	private AreaSelectCallback clientCallback = null;
 
 	public boolean mmousedown(Coord mc, int button) {
 	    synchronized(MapView.this) {
@@ -2873,6 +2901,15 @@ public class MapView extends PView implements DTarget, Console.Directory, PFList
 		    tt = null;
 		    glob.map.remove(ol);
 		    mgrab.remove();
+		    if(clientCallback != null) {
+			AreaSelectCallback cb = clientCallback;
+			sc = null;
+			release(xl);
+			if(selection == this)
+			    selection = null;
+			cb.areaselect(ol.a.ul, ol.a.br);
+			return(true);
+		    }
 			if (areaSelectCallback != null) {
 				areaSelectCallback.areaselect(ol.a.ul, ol.a.br);
 			}
@@ -3265,6 +3302,80 @@ public class MapView extends PView implements DTarget, Console.Directory, PFList
 			pfthread = new Thread(pf, "Pathfinder");
 			pfthread.start();
 		}
+	}
+
+	/**
+	 * H4D: lets client code ask the player to drag out a rectangle of tiles on the map. The
+	 * callback gets the selected tiles as ul (inclusive) and br (exclusive). Right-click cancels.
+	 * Returns false when another selection (e.g. one the server asked for) is already active.
+	 */
+	public boolean selectAreaClientSide(AreaSelectCallback callback) {
+		synchronized(this) {
+			if(selection != null)
+				return(false);
+			selection = new Selector(null);
+			selection.clientCallback = callback;
+			return(true);
+		}
+	}
+
+	/** H4D: cancels a selection started by {@link #selectAreaClientSide}, if one is active. */
+	public void cancelClientAreaSelect() {
+		synchronized(this) {
+			if((selection != null) && (selection.clientCallback != null)) {
+				selection.destroy();
+				selection = null;
+				if(ui != null && ui.gui != null)
+					ui.gui.msg("Area selection cancelled.", java.awt.Color.WHITE);
+			}
+		}
+	}
+
+	/* H4D: a one-shot "click an object" request from client code (e.g. VehicleBarrelFiller). While
+	 * set, the next left-click on a gob goes to the callback instead of the server; right-click
+	 * cancels; left-clicks on bare ground are swallowed. */
+	private volatile java.util.function.Consumer<Gob> clientGobPick = null;
+
+	public void startClientGobPick(java.util.function.Consumer<Gob> callback) {
+		clientGobPick = callback;
+	}
+
+	public void cancelClientGobPick() {
+		clientGobPick = null;
+	}
+
+	private boolean clientGobPickHit(int button, ClickData inf) {
+		java.util.function.Consumer<Gob> cb = clientGobPick;
+		if (cb == null)
+			return false;
+		if (button == 3) {
+			clientGobPick = null;
+			if (ui.gui != null)
+				ui.gui.msg("Object selection cancelled.", java.awt.Color.WHITE);
+			return true;
+		}
+		if (button != 1)
+			return false;
+		Gob gob = null;
+		if (inf != null) {
+			Object[] ca = inf.clickargs();
+			if (ca.length > 1 && ca[1] instanceof Integer)
+				gob = glob.oc.getgob(((Integer) ca[1]).longValue());
+		}
+		if (gob == null) {
+			if (ui.gui != null)
+				ui.gui.msg("Click on an object (right-click cancels).", java.awt.Color.WHITE);
+			return true;
+		}
+		clientGobPick = null;
+		cb.accept(gob);
+		return true;
+	}
+
+	/** H4D: true while the client is placing an object and the placement ghost has loaded. */
+	public boolean isPlacingReady() {
+		Loader.Future<Plob> placing = this.placing;
+		return((placing != null) && placing.done());
 	}
 
 	public void registerAreaSelect(AreaSelectCallback callback) {

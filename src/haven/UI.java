@@ -697,6 +697,8 @@ public class UI {
 	    new Warning("wdgmsg sender (%s) is not in rwidgets, message is %s", sender.getClass().getName(), msg).issue();
 	    return;
 	}
+	if(RockCrystalGuard.blocks(this, sender, msg, args)) // H4D: doc/H4D-features/rock-crystal-guard.md
+	    return;
 	if(rcvr != null)
 	    rcvr.rcvmsg(id, msg, args);
 //	System.out.println("id: " + id + ", msg: " + msg + ", args: " + Arrays.toString(args) + " - " + getwidget(id).getClass().getName()); // ND: Use this to print widget messages
@@ -842,6 +844,26 @@ public class UI {
 
     public void msg(Notice msg) {
 	dispatch(root, new NoticeEvent(msg));
+    }
+
+    /* H4D: the last error, info message and sound effect the server sent, each with a counter that
+     * goes up on every new one, so bots (e.g. AreaMilker) can tell how a click turned out. */
+    public volatile String lastServerError = null, lastServerInfo = null, lastServerSfx = null;
+    public volatile int serverErrorSeq = 0, serverInfoSeq = 0, serverSfxSeq = 0;
+
+    public void noteServerError(String text) {
+	lastServerError = text;
+	serverErrorSeq++;
+    }
+
+    public void noteServerInfo(String text) {
+	lastServerInfo = text;
+	serverInfoSeq++;
+    }
+
+    public void noteServerSfx(String resname) {
+	lastServerSfx = resname;
+	serverSfxSeq++;
     }
 
     public void msg(String msg, Color color, Audio.Clip sfx) {

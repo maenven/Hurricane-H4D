@@ -96,8 +96,11 @@ public class RootWidget extends ConsoleHost implements UI.Notice.Handler, Widget
 
     public void uimsg(String msg, Object... args) {
 	if(msg == "err") {
+	    ui.noteServerError((String)args[0]); // H4D
 	    ui.error((String)args[0]);
 	} else if(msg == "msg") {
+	    if(args[0] instanceof String)
+		ui.noteServerInfo((String)args[0]); // H4D
 	    if(args.length == 1) {
 		ui.msg((String)args[0]);
 	    } else {
@@ -125,6 +128,7 @@ public class RootWidget extends ConsoleHost implements UI.Notice.Handler, Widget
 	    double vol = (args.length > a) ? Utils.dv(args[a++]) : 1.0;
 	    double spd = (args.length > a) ? Utils.dv(args[a++]) : 1.0;
 	    ui.sess.glob.loader.defer(() -> {
+		    ui.noteServerSfx(resid.get().name); // H4D
 		    Audio.CS clip = Audio.fromres(resid.get());
 		    if(spd != 1.0)
 			clip = new Audio.Resampler(clip).sp(spd);

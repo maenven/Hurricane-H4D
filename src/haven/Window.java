@@ -35,6 +35,8 @@ import haven.render.*;
 import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.regex.Matcher;
 
 import static haven.PUtils.*;
@@ -106,6 +108,205 @@ public class Window extends Widget {
     public UI.Grab dm = null;
     private Coord doff;
     public boolean large = false;
+    private String lockcap = null;
+    private boolean lockv = false;
+
+    /* Window lock: a locked window can't be dragged or resized. The state is
+     * saved per window title, so e.g. every "Inventory" window stays locked. */
+    public boolean locked() {
+	if(cap != null && !cap.equals(lockcap)) {
+	    lockcap = cap;
+	    lockv = Utils.getprefb("wndlock-" + cap, false);
+	}
+	return(lockv);
+    }
+
+    public void setlocked(boolean v) {
+	lockv = v;
+	if(cap != null) {
+	    lockcap = cap;
+	    Utils.setprefb("wndlock-" + cap, v);
+	}
+	if(v && (dm != null)) {
+	    dm.remove();
+	    dm = null;
+	}
+    }
+
+    public static class LockButton extends Widget {
+	private static final Map<String, Tex> cache = new HashMap<>();
+	private boolean h = false, a = false;
+	private UI.Grab d = null;
+
+	public LockButton(Coord sz) {
+	    super(sz);
+	}
+
+	private Window wnd() {
+	    for(Widget w = parent; w != null; w = w.parent) {
+		if(w instanceof Window)
+		    return((Window)w);
+	    }
+	    return(null);
+	}
+
+	private final Object locktip = new KeyboundTip("Unlock window (allow moving)", false);
+	private final Object unlocktip = new KeyboundTip("Lock window in place", false);
+
+	/* Built from the Stack All button art (same frame, size and placement as the
+	 * other title bar buttons) with the stack glyph replaced by a padlock. */
+	private static Tex img(int state, boolean locked) {
+	    String key = state + "/" + locked;
+	    synchronized(cache) {
+		Tex tex = cache.get(key);
+		if(tex == null) {
+		    tex = new TexI(padlock(stackbtni[state], locked));
+		    cache.put(key, tex);
+		}
+		return(tex);
+	    }
+	}
+
+	private static int lum(int argb) {
+	    return((((argb >> 16) & 0xff) * 3 + ((argb >> 8) & 0xff) * 6 + (argb & 0xff)) / 10);
+	}
+
+	private static BufferedImage padlock(BufferedImage src, boolean locked) {
+	    int w = src.getWidth(), h = src.getHeight();
+	    BufferedImage img = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
+	    java.awt.Graphics2D g = img.createGraphics();
+	    g.drawImage(src, 0, 0, null);
+	    int x0 = w, y0 = h, x1 = -1, y1 = -1;
+	    for(int y = 0; y < h; y++) {
+		for(int x = 0; x < w; x++) {
+		    if((img.getRGB(x, y) >>> 24) >= 128) {
+			x0 = Math.min(x0, x); x1 = Math.max(x1, x);
+			y0 = Math.min(y0, y); y1 = Math.max(y1, y);
+		    }
+		}
+	    }
+	    if(x1 < 0) {
+		g.dispose();
+		return(img);
+	    }
+	    double cx = (x0 + x1 + 1) / 2.0, cy = (y0 + y1 + 1) / 2.0, r = (x1 - x0 + 1) / 2.0;
+	    /* Fill colour of the button face: the middle value of the pixels inside
+	     * the frame that aren't part of the white glyph or its dark outline. */
+	    double fr = r * 0.78;
+	    java.util.List<Integer> face = new java.util.ArrayList<>();
+	    for(int y = 0; y < h; y++) {
+		for(int x = 0; x < w; x++) {
+		    double dx = x + 0.5 - cx, dy = y + 0.5 - cy;
+		    if(dx * dx + dy * dy <= fr * fr) {
+			int c = img.getRGB(x, y), l = lum(c);
+			if(((c >>> 24) >= 128) && (l > 70) && (l < 200))
+			    face.add(c);
+		    }
+		}
+	    }
+	    if(!face.isEmpty()) {
+		face.sort((p, q) -> lum(p) - lum(q));
+		int fill = face.get(face.size() / 2);
+		for(int y = 0; y < h; y++) {
+		    for(int x = 0; x < w; x++) {
+			double dx = x + 0.5 - cx, dy = y + 0.5 - cy;
+			if(dx * dx + dy * dy <= fr * fr) {
+			    int l = lum(img.getRGB(x, y));
+			    if((l <= 95) || (l >= 175))
+				img.setRGB(x, y, fill);
+			}
+		    }
+		}
+	    }
+	    g.setRenderingHint(java.awt.RenderingHints.KEY_ANTIALIASING, java.awt.RenderingHints.VALUE_ANTIALIAS_ON);
+	    float lw = (float)Math.max(1.5, r * 0.14), ow = lw + (float)Math.max(1.5, r * 0.11);
+	    double bw = r * 0.74, bh = r * 0.52;
+	    double bx = cx - bw / 2, by = cy + r * 0.02 + (locked ? 0 : r * 0.08);
+	    double sw = bw * 0.62, sh = r * 0.62;
+	    double sx = cx - sw / 2, sy = by - sh / 2 - r * 0.12 - (locked ? 0 : r * 0.24);
+	    double legb = by + bh * 0.2;
+	    java.awt.geom.Path2D shackle = new java.awt.geom.Path2D.Double();
+	    shackle.moveTo(sx, locked ? legb : sy + sh / 2 + r * 0.06);
+	    shackle.lineTo(sx, sy + sh / 2);
+	    shackle.append(new java.awt.geom.Arc2D.Double(sx, sy, sw, sh, 180, -180, java.awt.geom.Arc2D.OPEN), true);
+	    shackle.lineTo(sx + sw, legb);
+	    java.awt.Shape body = new java.awt.geom.RoundRectangle2D.Double(bx, by, bw, bh, r * 0.18, r * 0.18);
+	    Color dark = new Color(40, 40, 40), white = new Color(245, 245, 245);
+	    g.setColor(dark);
+	    g.setStroke(new java.awt.BasicStroke(ow, java.awt.BasicStroke.CAP_ROUND, java.awt.BasicStroke.JOIN_ROUND));
+	    g.draw(shackle);
+	    g.draw(body);
+	    g.fill(body);
+	    g.setColor(white);
+	    g.setStroke(new java.awt.BasicStroke(lw, java.awt.BasicStroke.CAP_ROUND, java.awt.BasicStroke.JOIN_ROUND));
+	    g.draw(shackle);
+	    g.fill(body);
+	    g.setColor(dark);
+	    double kr = r * 0.11;
+	    g.fill(new java.awt.geom.Ellipse2D.Double(cx - kr, by + bh * 0.28, kr * 2, kr * 2));
+	    g.fill(new java.awt.geom.Rectangle2D.Double(cx - kr * 0.5, by + bh * 0.28 + kr, kr, bh * 0.32));
+	    g.dispose();
+	    return(img);
+	}
+
+	public void draw(GOut g) {
+	    Window wnd = wnd();
+	    boolean locked = (wnd != null) && wnd.locked();
+	    int state = (a && h) ? 1 : ((h || (d != null)) ? 2 : 0);
+	    g.image(img(state, locked), Coord.z);
+	}
+
+	/* Only the visible button counts, like IButton (the art has a transparent
+	 * area above the title bar). */
+	private boolean hit(Coord c) {
+	    BufferedImage up = stackbtni[0];
+	    if(!c.isect(Coord.z, sz) || (c.x >= up.getWidth()) || (c.y >= up.getHeight()))
+		return(false);
+	    if(up.getRaster().getNumBands() < 4)
+		return(true);
+	    return(up.getRaster().getSample(c.x, c.y, 3) >= 128);
+	}
+
+	public boolean checkhit(Coord c) {
+	    return(hit(c));
+	}
+
+	public void mousemove(MouseMoveEvent ev) {
+	    h = hit(ev.c);
+	    super.mousemove(ev);
+	}
+
+	public boolean mousedown(MouseDownEvent ev) {
+	    if((ev.b != 1) || !hit(ev.c))
+		return(false);
+	    a = true;
+	    d = ui.grabmouse(this);
+	    return(true);
+	}
+
+	public boolean mouseup(MouseUpEvent ev) {
+	    if((d != null) && (ev.b == 1)) {
+		d.remove();
+		d = null;
+		boolean click = a && hit(ev.c);
+		a = false;
+		if(click) {
+		    Window wnd = wnd();
+		    if(wnd != null)
+			wnd.setlocked(!wnd.locked());
+		}
+		return(true);
+	    }
+	    return(super.mouseup(ev));
+	}
+
+	public Object tooltip(Coord c, Widget prev) {
+	    Window wnd = wnd();
+	    if((wnd != null) && wnd.locked())
+		return(locktip);
+	    return(unlocktip);
+	}
+    }
 
     @RName("wnd")
     public static class $_ implements Factory {
@@ -227,6 +428,7 @@ public class Window extends Widget {
 	public final boolean lg;
 	public final IButton cbtn;
     public IButton extlistbtn, stackbtn, unstackbtn, sortbtn;
+	public final LockButton lockbtn;
 	public boolean dragsize, cfocus;
 	public Area aa, ca;
 	public Coord cptl = Coord.z, cpsz = Coord.z;
@@ -237,6 +439,20 @@ public class Window extends Widget {
 	public DefaultDeco(boolean lg) {
 	    this.lg = lg;
 	    cbtn = add(new IButton(cbtni[0], cbtni[1], cbtni[2])).action(() -> ((Window)parent).reqclose());
+	    lockbtn = add(new LockButton(Utils.imgsz(stackbtni[0])));
+	}
+
+	public void tick(double dt) {
+	    super.tick(dt);
+	    // Keep the lock button just left of the leftmost visible title bar button.
+	    int left = cbtn.c.x;
+	    for(IButton b : new IButton[] {extlistbtn, sortbtn, unstackbtn, stackbtn}) {
+		if((b != null) && b.visible && (b.c.x < left))
+		    left = b.c.x;
+	    }
+	    Coord nc = Coord.of(left - UI.scale(20), cbtn.c.y);
+	    if(!nc.equals(lockbtn.c))
+		lockbtn.c = nc;
 	}
 	public DefaultDeco() {this(false);}
 
@@ -349,7 +565,7 @@ public class Window extends Widget {
 	public UI.Grab szdrag;
 	private Coord szdragc;
 	public boolean mousedown(MouseDownEvent ev) {
-	    if(dragsize) {
+	    if(dragsize && !((Window)parent).locked()) {
 		Coord c = ev.c, cc = c.sub(ca.ul);
 		if((ev.b == 1) && (c.x < ca.br.x) && (c.y < ca.br.y) && (c.y >= ca.br.y - UI.scale(25) + (ca.br.x - c.x))) {
 		    szdrag = ui.grabmouse(this);
@@ -612,6 +828,8 @@ public class Window extends Widget {
     }
 
     public void drag(Coord off) {
+	if(locked())
+	    return;
 	dm = ui.grabmouse(this);
 	doff = off;
     }
@@ -697,6 +915,7 @@ public class Window extends Widget {
     private String animst = null;
     public void tick(double dt) {
 	super.tick(dt);
+	barrelTakeTick();
 	if(anim != null) {
 	    if(anim.tick(dt)) {
 		if(animst == "show") {
@@ -921,6 +1140,38 @@ public class Window extends Widget {
         super.dispose();
         if (this.cap != null)
             Utils.setprefc("wndc-" + this.cap, this.c);
+    }
+
+    /* H4D: barrel "Take #" row (doc/H4D-features/barrel-take-amount.md). Added once the server has put
+     * the barrel's own Take button in, and kept under the rest of the window's contents. */
+    private BarrelTakeAmount barrelTake = null;
+    private boolean barrelTakeChecked = false;
+    private void barrelTakeTick() {
+	if(!BarrelTakeAmount.WINDOW_CAP.equals(cap))
+	    return;
+	if(barrelTake == null) {
+	    if(barrelTakeChecked)
+		return;
+	    if((OptWnd.barrelTakeAmountCheckBox != null) && !OptWnd.barrelTakeAmountCheckBox.a) {
+		barrelTakeChecked = true;
+		return;
+	    }
+	    if(BarrelTakeAmount.findTake(this) == null)
+		return;
+	    barrelTakeChecked = true;
+	    barrelTake = add(new BarrelTakeAmount(), Coord.z);
+	}
+	int y = 0;
+	for(Widget ch = child; ch != null; ch = ch.next) {
+	    if((ch == barrelTake) || (ch == deco) || !ch.visible())
+		continue;
+	    y = Math.max(y, ch.c.y + ch.sz.y);
+	}
+	Coord want = Coord.of(0, y + UI.scale(5));
+	if(!want.equals(barrelTake.c)) {
+	    barrelTake.move(want);
+	    pack();
+	}
     }
 
     @Override

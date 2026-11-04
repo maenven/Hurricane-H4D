@@ -164,6 +164,7 @@ public class GameUI extends ConsoleHost implements Console.Directory, UI.Notice.
 	public Thread interactWithNearestObjectThread;
 	public Thread enterNearestVehicleThread;
 	public Thread wagonNearestLiftableThread;
+	public Thread vehicleAreaTransferThread;
 	public Thread cloverScriptThread;
 	public Thread coracleScriptThread;
 	public Thread skisScriptThread;
@@ -1288,6 +1289,7 @@ public class GameUI extends ConsoleHost implements Console.Directory, UI.Notice.
 	    } else {
 		throw(new UI.UIException("Illegal gameui child", place, args));
 	    }
+	    long objGobId = -1; // H4D
 	    while(a < args.length) {
 		Object opt = args[a++];
 		if(opt instanceof Object[]) {
@@ -1308,12 +1310,15 @@ public class GameUI extends ConsoleHost implements Console.Directory, UI.Notice.
 		    case "obj":
 			if(child instanceof Window) {
 			    ((Window)child).settrans(new GobTrans(map, Utils.uiv(opta[1])));
+			    objGobId = Utils.uiv(opta[1]); // H4D: processing timers
 			}
 			break;
 		    }
 		}
 	    }
 	    add(child, c);
+	    if(child instanceof Window)
+		ProcessTimers.windowOpened(this, (Window)child, objGobId); // H4D
 	} else if(place == "abt") {
 	    add(child, Coord.z);
 	} else {
@@ -1641,6 +1646,9 @@ public class GameUI extends ConsoleHost implements Console.Directory, UI.Notice.
     private double lastwndsave = 0;
     public void tick(double dt) {
 	super.tick(dt);
+	haven.automated.AnimalStatsOverlay.tick(this, dt); // H4D
+	ProcessTimers.tick(this, dt); // H4D
+	haven.automated.MilkShearMarkers.tick(this); // H4D
 	double now = Utils.rtime();
 	if(now - lastwndsave > 60) {
 	    savewndpos();
@@ -1670,9 +1678,11 @@ public class GameUI extends ConsoleHost implements Console.Directory, UI.Notice.
     public void uimsg(String msg, Object... args) {
 	if(msg == "err") {
 	    String err = (String)args[0];
+	    ui.noteServerError(err); // H4D
 	    ui.error(err);
 	} else if(msg == "msg") {
 	    String text = (String)args[0];
+	    ui.noteServerInfo(text); // H4D
 	    ui.msg(text);
 	} else if(msg == "prog") {
 	    if(args.length > 0) {

@@ -39,8 +39,27 @@ public class RosterWindow extends Window {
 	    x += wdg.sz.x + UI.scale(10);
 	}
 	buttons.get(0).click();
+	placeAnimalStatsControls(); // H4D: AnimalStatsOverlay controls on the button row
 	pack();
 	rmseq++;
+    }
+
+    private haven.automated.AnimalStatsOverlay.ShowBox statsShow;
+    private haven.automated.AnimalStatsOverlay.HighlightBox statsHighlight;
+    private haven.automated.AnimalStatsOverlay.HeatmapBox statsHeatmap;
+    private void placeAnimalStatsControls() {
+	if(statsShow == null) {
+	    statsShow = add(new haven.automated.AnimalStatsOverlay.ShowBox());
+	    statsHighlight = add(new haven.automated.AnimalStatsOverlay.HighlightBox(UI.scale(190)));
+	    statsHeatmap = add(new haven.automated.AnimalStatsOverlay.HeatmapBox());
+	}
+	int right = CattleRoster.WIDTH;
+	/* Right edge: "Stats above animals" sits right above "Heatmap"; the dropdown stays left of Heatmap,
+	 * where it was (clear of the type buttons on the left). */
+	int row2 = btny + statsShow.sz.y + UI.scale(4);
+	statsShow.move(new Coord(right - statsShow.sz.x, btny));
+	statsHighlight.move(new Coord(right - statsHeatmap.sz.x - UI.scale(8) - statsHighlight.sz.x, row2));
+	statsHeatmap.move(new Coord(right - statsHeatmap.sz.x, row2 + (statsHighlight.sz.y - statsHeatmap.sz.y) / 2));
     }
 
     public void reqclose() {

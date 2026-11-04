@@ -776,6 +776,8 @@ public class MenuGrid extends Widget implements KeyBinding.Bindable {
 		makeLocal("customclient/menugrid/Toggles/QueuedMovementWindow");
 		makeLocal("customclient/menugrid/Toggles/AutoDrop");
 		makeLocal("customclient/menugrid/Toggles/FlowerMenuAutoSelect");
+		makeLocal("customclient/menugrid/Toggles/AnimalStatsOverhead");
+		makeLocal("customclient/menugrid/Toggles/MilkShearMarkers");
 
 		// Category: Bots
 		makeLocal("customclient/menugrid/Bots/OceanScoutBot");
@@ -808,6 +810,10 @@ public class MenuGrid extends Widget implements KeyBinding.Bindable {
 		makeLocal("customclient/menugrid/OtherScriptsAndTools/QuestHelper");
 		makeLocal("customclient/menugrid/OtherScriptsAndTools/Add4BranchesScript");
 		makeLocal("customclient/menugrid/OtherScriptsAndTools/Add5WoodBlocksScript");
+		makeLocal("customclient/menugrid/OtherScriptsAndTools/LightFiresInArea");
+		makeLocal("customclient/menugrid/OtherScriptsAndTools/ShearAnimalsInArea");
+		makeLocal("customclient/menugrid/OtherScriptsAndTools/MilkAnimalsInArea");
+		makeLocal("customclient/menugrid/OtherScriptsAndTools/AutoButcher");
 
 		// Category: Quick Switch From Belt
 		makeLocal("customclient/menugrid/QuickSwitchFromBelt/Equip_B12");
@@ -882,6 +888,10 @@ public class MenuGrid extends Widget implements KeyBinding.Bindable {
 				AutoDropManagerWindow.autoDropItemsCheckBox.set(!AutoDropManagerWindow.autoDropItemsCheckBox.a);
 			} else if (ad[2].equals("FlowerMenuAutoSelect")) {
 				FlowerMenuAutoSelectManagerWindow.flowerMenuAutoSelectCheckBox.set(!FlowerMenuAutoSelectManagerWindow.flowerMenuAutoSelectCheckBox.a);
+			} else if (ad[2].equals("AnimalStatsOverhead")) {
+				haven.automated.AnimalStatsOverlay.toggle(ui);
+			} else if (ad[2].equals("MilkShearMarkers")) {
+				haven.automated.MilkShearMarkers.toggle(ui);
 			} else if (ad[2].equals("PathfinderWalking")) {
                 OptWnd.walkWithPathFinderCheckBox.set(!OptWnd.walkWithPathFinderCheckBox.a);
 			}
@@ -1155,6 +1165,14 @@ public class MenuGrid extends Widget implements KeyBinding.Bindable {
 				gui.runActionThread(new Thread(new AddBranchesToFurnace(gui, 4), "Add4Branches"));
 			} else if (ad[2].equals("Add5WoodBlocksScript")) {
 				gui.runActionThread(new Thread(new AddWoodBlocksToSmokeShed(gui, 5), "Add5WoodBlocks"));
+			} else if (ad[2].equals("LightFiresInArea")) {
+				haven.automated.AreaFireLighter.menuButton(gui);
+			} else if (ad[2].equals("ShearAnimalsInArea")) {
+				haven.automated.AreaShearer.menuButton(gui);
+			} else if (ad[2].equals("MilkAnimalsInArea")) {
+				haven.automated.AreaMilker.menuButton(gui);
+			} else if (ad[2].equals("AutoButcher")) {
+				haven.automated.AutoButcher.menuButton(gui);
 			}
 		} else if (ad[1].equals("QuickSwitchFromBelt")) {
 			new Thread(new EquipFromBelt(gui, ad[2]), "EquipFromBelt").start();

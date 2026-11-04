@@ -783,6 +783,7 @@ public class OptWnd extends Window {
 	public static CheckBox improvedInstrumentMusicWindowCheckBox;
     public static CheckBox preventEscKeyFromClosingWindowsCheckBox;
     public static CheckBox stackWindowsWhenOpenedCheckBox;
+    public static CheckBox barrelTakeAmountCheckBox; // H4D: barrel "Take #" row, see doc/H4D-features/barrel-take-amount.md
 
     public class InterfaceSettingsPanel extends Panel {
 	public InterfaceSettingsPanel(Panel back) {
@@ -1169,6 +1170,16 @@ public class OptWnd extends Window {
             }
         }, rightColumn.pos("bl").adds(0, 2));
         stackWindowsWhenOpenedCheckBox.tooltip = stackWindowsWhenOpenedTooltip;
+        rightColumn = add(barrelTakeAmountCheckBox = new CheckBox("Barrel Window: Take a chosen Amount"){
+            {a = (Utils.getprefb("barrelTakeAmount", true));}
+            public void changed(boolean val) {
+                Utils.setprefb("barrelTakeAmount", val);
+            }
+        }, rightColumn.pos("bl").adds(0, 2));
+        barrelTakeAmountCheckBox.tooltip = RichText.render("Adds an amount box and a $col[218,163,0]{Take #} button to barrel windows, " +
+                "so you can take e.g. 5 flour, salt or cave dust instead of a full stack." +
+                "\n\nWhile it runs, $col[218,163,0]{Automatic Item Stacking} is switched off and then back on." +
+                "\n\n$col[185,185,185]{Reopen the barrel after changing this.}", UI.scale(300));
 
 		Widget backButton;
 		add(backButton = new PButton(UI.scale(200), "Back", 27, back, "Advanced Settings"), leftColumn.pos("bl").adds(0, 30).x(0));
@@ -2088,6 +2099,7 @@ public class OptWnd extends Window {
 	public static CheckBox showBarrelContentsTextCheckBox;
 	public static CheckBox showIconSignTextCheckBox;
     public static CheckBox showProduceSackTextCheckBox;
+    public static CheckBox showProcessTimersCheckBox; // H4D
 	public static CheckBox showCheeseRacksTierTextCheckBox;
 	public static CheckBox highlightCliffsCheckBox;
 	public static ColorOptionWidget highlightCliffsColorOptionWidget;
@@ -2869,6 +2881,16 @@ public class OptWnd extends Window {
                 }
             }, rightColumn.pos("bl").adds(0, 2));
             showProduceSackTextCheckBox.tooltip = showProduceSackTextTooltip;
+            rightColumn = add(showProcessTimersCheckBox = new CheckBox("Show Smelter/Oven Timers"){ // H4D
+                {a = (Utils.getprefb("showProcessTimers", true));}
+                public void changed(boolean val) {
+                    Utils.setprefb("showProcessTimers", val);
+                    if (ui != null && ui.gui != null){
+                        ui.gui.optionInfoMsg("Smelter/Oven Timers are now " + (val ? "SHOWN" : "HIDDEN") + "!", (val ? msgGreen : msgGray), Audio.resclip(val ? Toggle.sfxon : Toggle.sfxoff));
+                    }
+                }
+            }, rightColumn.pos("bl").adds(0, 2));
+            showProcessTimersCheckBox.tooltip = showProcessTimersTooltip;
 			rightColumn = add(showCheeseRacksTierTextCheckBox = new CheckBox("Show Cheese Racks Tier Text"){
 				{a = (Utils.getprefb("showCheeseRacksTierText", false));}
 				public void changed(boolean val) {
@@ -3357,6 +3379,8 @@ public class OptWnd extends Window {
 	public static CheckBox togglePartyPermissionsOnLoginCheckBox;
 	public static CheckBox toggleItemStackingOnLoginCheckBox;
 	public static CheckBox autoSelect1stFlowerMenuCheckBox;
+	public static CheckBox vehicleAreaTransferCheckBox;
+	public static CheckBox autoEquipCuttingToolCheckBox;
 	public static CheckBox alsoUseContainersWithRepeaterCheckBox;
 	public static CheckBox autoRepeatFlowerMenuCheckBox;
 	public static CheckBox autoReloadCuriositiesFromInventoryCheckBox;
@@ -3365,7 +3389,9 @@ public class OptWnd extends Window {
 	public static CheckBox autoSwitchBootsCheckBox;
 	public static CheckBox autoDropTicksCheckBox;
 	public static CheckBox autoPeaceAnimalsWhenCombatStartsCheckBox;
+	public static CheckBox autoReaggroAnimalsCheckBox;
 	public static CheckBox preventUsingRawHideWhenRidingCheckBox;
+	public static CheckBox blockStoneActionsWithRockCrystalCheckBox;
 	public static CheckBox autoDrinkingCheckBox;
 	public static TextEntry autoDrinkingThresholdTextEntry;
 	public static CheckBox enableQueuedMovementCheckBox;
@@ -3553,6 +3579,17 @@ public class OptWnd extends Window {
 				}
 			}, prev.pos("bl").adds(0, 12));
 			autoPeaceAnimalsWhenCombatStartsCheckBox.tooltip = autoPeaceAnimalsWhenCombatStartsTooltip;
+			prev = add(autoReaggroAnimalsCheckBox = new CheckBox("Auto Re-aggro Animals that leave Combat"){
+				{a = Utils.getprefb("autoReaggroAnimals", false);}
+				public void set(boolean val) {
+					Utils.setprefb("autoReaggroAnimals", val);
+					a = val;
+					if (ui != null && ui.gui != null) {
+						ui.gui.optionInfoMsg("Auto Re-aggro Animals is now " + (val ? "ENABLED" : "DISABLED") + ".", (val ? msgGreen : msgRed), Audio.resclip(val ? Toggle.sfxon : Toggle.sfxoff));
+					}
+				}
+			}, prev.pos("bl").adds(0, 12));
+			autoReaggroAnimalsCheckBox.tooltip = autoReaggroAnimalsTooltip;
 			prev = add(preventUsingRawHideWhenRidingCheckBox = new CheckBox("Prevent using Raw Hide when Riding a Horse"){
 				{a = Utils.getprefb("preventUsingRawHideWhenRiding", false);}
 				public void changed(boolean val) {
@@ -3560,6 +3597,17 @@ public class OptWnd extends Window {
 				}
 			}, prev.pos("bl").adds(0, 12));
 			preventUsingRawHideWhenRidingCheckBox.tooltip = preventUsingRawHideWhenRidingTooltip;
+			prev = add(blockStoneActionsWithRockCrystalCheckBox = new CheckBox("Block Stone Actions while carrying Rock Crystal"){
+				{a = Utils.getprefb("blockStoneActionsWithRockCrystal", false);}
+				public void set(boolean val) {
+					Utils.setprefb("blockStoneActionsWithRockCrystal", val);
+					a = val;
+					if (ui != null && ui.gui != null) {
+						ui.gui.optionInfoMsg("Block Stone Actions while carrying Rock Crystal is now " + (val ? "ENABLED" : "DISABLED") + ".", (val ? msgGreen : msgRed), Audio.resclip(val ? Toggle.sfxon : Toggle.sfxoff));
+					}
+				}
+			}, prev.pos("bl").adds(0, 12));
+			blockStoneActionsWithRockCrystalCheckBox.tooltip = blockStoneActionsWithRockCrystalTooltip;
 			prev = add(autoDrinkingCheckBox = new CheckBox("Auto-Drink Water below threshold:"){
 				{a = Utils.getprefb("autoDrinkTeaOrWater", false);}
 				public void set(boolean val) {
@@ -3596,6 +3644,20 @@ public class OptWnd extends Window {
 			}, prev.pos("bl").adds(0, 12));
 			enableQueuedMovementCheckBox.tooltip = enableQueuedMovementTooltip;
 
+			prev = add(vehicleAreaTransferCheckBox = new CheckBox("Load/Unload Carts & Wagons from an Area (Ctrl+Right-Click)"){
+				{a = Utils.getprefb("vehicleAreaTransfer", true);}
+				public void changed(boolean val) {
+					Utils.setprefb("vehicleAreaTransfer", val);
+				}
+			}, prev.pos("bl").adds(0, 12).x(0));
+			vehicleAreaTransferCheckBox.tooltip = vehicleAreaTransferTooltip;
+			prev = add(autoEquipCuttingToolCheckBox = new CheckBox("Auto-Equip Best Cutting Tool (Butcher / Split / Chop)"){
+				{a = Utils.getprefb("autoEquipCuttingTool", true);}
+				public void changed(boolean val) {
+					Utils.setprefb("autoEquipCuttingTool", val);
+				}
+			}, prev.pos("bl").adds(0, 2));
+			autoEquipCuttingToolCheckBox.tooltip = autoEquipCuttingToolTooltip;
             prev = add(walkWithPathFinderCheckBox = new CheckBox("Walk with Pathfinder (Ctrl+Shift+Click)"){
                 {a = Utils.getprefb("walkWithPathfinder", false);}
                 public void set(boolean val) {
@@ -5533,6 +5595,12 @@ public class OptWnd extends Window {
 	private static final Object showIconSignTextTooltip = RichText.render("This adds text on top of icon signs, that shows the name of the currently displayed icon. Empty signs won't show any text." +
 			"\n" +
 			"\n$col[218,163,0]{Keybind:} $col[185,185,185]{This can also be toggled using a keybind.}", UI.scale(300));
+    private static final Object showProcessTimersTooltip = RichText.render("Shows how long until smelters, stack furnaces, finery forges, ovens, kilns, crucibles and smoke sheds finish." + // H4D
+            "\n" +
+            "\nOpen the object once to start its timer; it keeps counting down after you close the window. " +
+            "Smelters and finery forges know their times right away; for the others the client learns the time by watching the progress tick for about a minute, then remembers it." +
+            "\n" +
+            "\n$col[185,185,185]{Smelters and stack furnaces pause their timer while unlit. Other objects can't be checked for fuel, so refuel and reopen them if the fire went out.}", UI.scale(300));
     private static final Object showProduceSackTextTooltip = RichText.render("This adds text on top of produce sacks, that shows the name of the currently displayed icon. Empty sacks won't show any text." +
             "\n" +
             "\n$col[218,163,0]{Keybind:} $col[185,185,185]{This can also be toggled using a keybind.}", UI.scale(300));
@@ -5607,11 +5675,35 @@ public class OptWnd extends Window {
 	private static final Object autoPeaceAnimalsWhenCombatStartsTooltip = RichText.render("This will automatically set your status to 'Peace' when combat is initiated with a new target (animals only). " +
 			"\nToggling this on, while in combat, will also autopeace all animals you are currently fighting." +
 			"\n\n$col[218,163,0]{Action Button:} $col[185,185,185]{This setting can also be turned on/off using an action button from the menu grid (Custom Client Extras → Toggles).}", UI.scale(320));
+	private static final Object autoReaggroAnimalsTooltip = RichText.render("Works like the re-aggro in the Ender and Kami clients: whenever an animal drops out of combat with you (it fled, or you peaced it and it ran off), the client immediately starts combat with it again." +
+			"\nApplies to every animal you were fighting, not only your current target. Players are never re-aggroed, and nothing happens if the animal is knocked out, gone, or more than ~18 tiles away." +
+			"\nMost useful together with $col[218,163,0]{Auto-Peace Animals when Combat Starts}." +
+			"\n\n$col[185,185,185]{The per-target re-aggro toggle (button next to the target's peace button, or the hotkey) still works for single targets, including players.}", UI.scale(320));
+	private static final Object blockStoneActionsWithRockCrystalTooltip = RichText.render("While a Rock Crystal is in your inventory, this blocks actions that can use up stone from your inventory, so the crystal isn't used by accident:" +
+			"\n$col[218,163,0]{Crafting} a recipe with a stone ingredient, pressing $col[218,163,0]{Build} on a construction site, and starting the $col[218,163,0]{Landscape} tool (paving)." +
+			"\n\nYou'll see \"Action denied, please remove Rock Crystal to continue your actions.\" until the crystal is out of your inventory.", UI.scale(300));
 	private static final Object preventUsingRawHideWhenRidingTooltip = RichText.render("This will prevent you from using Raw Hide while riding a Horse, and only allow using it when you're not mounted.", UI.scale(300));
 	private static final Object autoDrinkingTooltip = RichText.render("When your Stamina Bar goes below the set threshold, try to drink Water. If the threshold box is empty, it defaults to 75%." +
 			"\n" +
 			"\n$col[218,163,0]{Action Button:} $col[185,185,185]{This setting can also be turned on/off using an action button from the menu grid (Custom Client Extras → Toggles).}", UI.scale(320));
 	private static final Object enableQueuedMovementTooltip = RichText.render("$col[218,163,0]{Action Button:} $col[185,185,185]{This setting can also be turned on/off using an action button from the menu grid (Custom Client Extras → Toggles).}", UI.scale(300));
+    private static final Object vehicleAreaTransferTooltip = RichText.render("Hold Ctrl and Right-Click a cart or a wagon (with nothing lifted) to get three choices:" +
+            "\n" +
+            "\n$col[218,163,0]{Load from area:} $col[185,185,185]{drag a rectangle over the objects you want loaded, pick which kind of object if there are several, and they get lifted into the vehicle one by one until it is full or the area is empty.}" +
+            "\n$col[218,163,0]{Unload into area:} $col[185,185,185]{drag a rectangle where the cargo should go, and it gets taken out and set down in free spots inside it.}" +
+            "\n" +
+            "\n$col[218,163,0]{Fill barrels at a well/cistern/mill:} $col[185,185,185]{click the source, and every empty barrel in the vehicle is taken out, filled there and put back.}" +
+            "\n" +
+            "\nCtrl+Right-Click on a well, cistern or mill offers the same barrel filling: pick it, then click the cart, wagon, snekkja or knarr. Ctrl+Right-Click the source again while it runs to stop." +
+            "\n" +
+            "\nRight-click cancels the area selection. Ctrl+Right-Click the vehicle again while it runs to stop it." +
+            "\nWith this off, Ctrl+Right-Click on carts, wagons, wells, cisterns and mills behaves as before.", UI.scale(320));
+    private static final Object autoEquipCuttingToolTooltip = RichText.render("When you choose $col[218,163,0]{Butcher} on an animal, or $col[218,163,0]{Split} on a block of wood, your highest quality cutting tool is put in your hand first." +
+            "\n" +
+            "\nCutting tools: axes (Stone, Metal, Woodsman's, Tinker's Throwing), knives (Flint, Ceramic), Obsidian Dagger, Butcher's Cleaver and swords (Bronze, Fyrdsman's, Hirdsman's). They're taken from your inventory or belt, and the item that was in that hand goes where the tool was." +
+            "\n$col[218,163,0]{Chop} (trees, bushes) and $col[218,163,0]{Chop into blocks} (logs) use axes only, by type first: Stone Axe < Metal Axe < Woodsman's Axe, then quality." +
+            "\nA worse tool of the same kind in your hand gets swapped out, so you don't end up holding two." +
+            "\nNothing changes when the best tool is already in your hand, or when you hold an item on your cursor.", UI.scale(320));
     private static final Object walkWithPathfinderTooltip = RichText.render("You can use this to walk and avoid possible obstacles, for example, in your base. It's not perfect, and doesn't work with cliffs though." +
             "\n" +
             "\n$col[218,163,0]{Action Button:} $col[185,185,185]{This setting can also be turned on/off using an action button from the menu grid (Custom Client Extras → Toggles).}", UI.scale(300));
