@@ -295,7 +295,7 @@ add an entry here. Procedure: [upstream-merge-workflow.md](upstream-merge-workfl
 - **Detail:** [process-timers.md](process-timers.md).
 
 ### Milkable/shearable animal markers
-- **Behavior:** milk droplet / wool (or mohair) icon above animals that have milk or can be sheared; Toggles menu button.
+- **Behavior:** wool/mohair icon above shearable animals, crossed-out milk droplet above animals just emptied of milk; Toggles menu button.
 - **Why:** Ian's request (2026-11-04); wool detection as in Ender's client, milk from the roster as in Nurgling2.
 - **Fork-owned:** `src/haven/automated/MilkShearMarkers.java`,
   `res/customclient/menugrid/Toggles/MilkShearMarkers.res`.

@@ -29,7 +29,7 @@ Small, single-topic files. Read only the ones relevant to the current task — d
 
 | [animal-stats-overhead.md](animal-stats-overhead.md) | Memorized animal stats (Q/B/M) above heads and best-stat green highlight: `AnimalStatsOverlay`, `CattleId`, Cattle Roster entries. |
 | [auto-butcher.md](auto-butcher.md) | *Auto Butcher* window (stat + limit + genders + area → slaughter and butcher every memorized animal below the limit): `AutoButcher`. |
-| [milk-shear-markers.md](milk-shear-markers.md) | Milk droplet / wool icons over animals that can be milked/sheared (`MilkShearMarkers`; `-fleece` model part, roster `lactate` + remembered milking time). |
+| [milk-shear-markers.md](milk-shear-markers.md) | Wool icon over shearable animals, crossed-out milk droplet over just-milked ones (`MilkShearMarkers`; `-fleece` model part, milking sound / refusal). |
 | [process-timers.md](process-timers.md) | Finish timers above smelters/ovens/kilns/crucibles (`ProcessTimers`, `ProcessTimerGobInfo`, window→gob link, learned durations). |
 
 Tools: [tools/New-MenuGridButton.ps1](tools/New-MenuGridButton.ps1) — generates a menu-grid `.res` file by splicing a name/tooltip/description into an existing button's icon, without needing the (unavailable) official resource editor.
