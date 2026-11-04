@@ -284,3 +284,12 @@ add an entry here. Procedure: [upstream-merge-workflow.md](upstream-merge-workfl
   and `CuttingToolAutoEquip.equipBest`. Adds the `CLEAVER` policy there (Butcher's Cleaver beats any other
   sharp tool), now also used by the auto-equip option for manual *Slaughter* and *Butcher* (Ian, 2026-11-04).
 - **Detail:** [auto-butcher.md](auto-butcher.md).
+
+### Smelter / oven finish timers
+- **Behavior:** countdown above smelters, stack furnaces, finery forges, ovens, kilns, crucibles and smoke
+  sheds after you open them once; option *Show Smelter/Oven Timers*.
+- **Why:** Ian's request (2026-11-04), like Ender's and Kami's clients.
+- **Fork-owned:** `src/haven/ProcessTimers.java`, `src/haven/ProcessTimerGobInfo.java`.
+- **Shared hooks:** `GameUI.addchild` (window `"obj"` id) and `GameUI.tick`, `MapView` right-click
+  (`noteInteract`), `Gob.init` (attaches the GobInfo), `OptWnd` checkbox + tooltip.
+- **Detail:** [process-timers.md](process-timers.md).

@@ -2442,6 +2442,7 @@ public class MapView extends PView implements DTarget, Console.Directory, PFList
 					return;
 				}
 				if (clickb == 3) { // Right Click
+					ProcessTimers.noteInteract(gob); // H4D: link the window that opens to this gob
 					if (OptWnd.autoSwitchBootsCheckBox.a) {
 						switchBunnySlippersAndArmorBoots(gob);
 					}

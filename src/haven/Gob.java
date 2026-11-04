@@ -117,6 +117,7 @@ public class Gob implements RenderTree.Node, Sprite.Owner, Skeleton.ModOwner, Eq
 	BarrelContentsGobInfo barrelContentsGobInfo;
 	IconSignGobInfo iconSignGobInfo;
     ProduceSackGobInfo produceSackGobInfo;
+    ProcessTimerGobInfo processTimerInfo; // H4D
 	GobCheeseRackInfo cheeseRackInfo;
 	public boolean combatFoeHighlighted = false;
 	private GobSpeedInfo gobSpeedInfo;
@@ -1280,6 +1281,10 @@ public class Gob implements RenderTree.Node, Sprite.Owner, Skeleton.ModOwner, Eq
                 produceSackGobInfo = new ProduceSackGobInfo(this);
                 setattr(ProduceSackGobInfo.class, produceSackGobInfo);
             }
+			if (ProcessTimers.isProcessor(res.name) && processTimerInfo == null) { // H4D
+				processTimerInfo = new ProcessTimerGobInfo(this);
+				setattr(ProcessTimerGobInfo.class, processTimerInfo);
+			}
 			if (res.name.startsWith("gfx/terobjs/cheeserack") && cheeseRackInfo == null) {
 				cheeseRackInfo = new GobCheeseRackInfo(this);
 				setattr(GobCheeseRackInfo.class, cheeseRackInfo);
