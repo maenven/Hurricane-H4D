@@ -25,7 +25,7 @@
 2. *Start* (bot thread): put a Butcher's Cleaver in hand once (`CuttingToolAutoEquip.equipBest`, CLEAVER policy: the
    best cleaver always beats any other sharp tool; without one, the best sharp tool), butcher
    carcasses already lying in the area (resume after an inventory-full stop), then per target, nearest
-   first: right-click → *Slaughter* → wait until the gob has a `knock`/`dead` pose → roster `rm` →
+   first (tool into the second hand slot first, so a sack or shield in the first stays): right-click → *Slaughter* → wait until the gob has a `knock`/`dead` pose → roster `rm` →
    butcher: right-click the carcass, pick the first present of Skin, Scale, Crack, Clean, Butcher,
    Collect bones (Nurgling2's order), wait until idle, repeat until no option is left or the gob is gone.
    An item left on the cursor goes into the inventory, else on the ground.

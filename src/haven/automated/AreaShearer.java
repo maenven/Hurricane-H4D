@@ -295,15 +295,16 @@ public class AreaShearer implements Runnable {
 
 		WItem l = eq.slots[HAND_LEFT], r = eq.slots[HAND_RIGHT];
 		int slot;
-		if (l == null)
-			slot = HAND_LEFT;
-		else if (r == null)
+		// The second (right) hand slot first, so what lives in the first slot (a sack, a shield) stays.
+		if (r == null)
 			slot = HAND_RIGHT;
-		else {
+		else if (l == null)
 			slot = HAND_LEFT;
+		else {
+			slot = HAND_RIGHT;
 			if (l.item != r.item) {
 				// Two different items in hand: make room first.
-				l.item.wdgmsg("take", Coord.z);
+				r.item.wdgmsg("take", Coord.z);
 				if (!waitFor(() -> gui.vhand != null, 3000))
 					return false;
 				if (!stashCursor(src, null))
