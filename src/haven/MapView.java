@@ -2372,6 +2372,8 @@ public class MapView extends PView implements DTarget, Console.Directory, PFList
 	}
 	
 	protected void hit(Coord pc, Coord2d mc, ClickData inf) {
+		if (clientGobPick != null && clientGobPickHit(clickb, inf)) // H4D: see startClientGobPick
+			return;
 		int modflags = ui.modflags();
 		if (OptWnd.overrideCursorItemWhenHoldingAltCheckBox.a && ui.gui != null && ui.gui.vhand != null && clickb == 1)
 			modflags = modflags & ~ 4;
@@ -3314,6 +3316,47 @@ public class MapView extends PView implements DTarget, Console.Directory, PFList
 					ui.gui.msg("Area selection cancelled.", java.awt.Color.WHITE);
 			}
 		}
+	}
+
+	/* H4D: a one-shot "click an object" request from client code (e.g. VehicleBarrelFiller). While
+	 * set, the next left-click on a gob goes to the callback instead of the server; right-click
+	 * cancels; left-clicks on bare ground are swallowed. */
+	private volatile java.util.function.Consumer<Gob> clientGobPick = null;
+
+	public void startClientGobPick(java.util.function.Consumer<Gob> callback) {
+		clientGobPick = callback;
+	}
+
+	public void cancelClientGobPick() {
+		clientGobPick = null;
+	}
+
+	private boolean clientGobPickHit(int button, ClickData inf) {
+		java.util.function.Consumer<Gob> cb = clientGobPick;
+		if (cb == null)
+			return false;
+		if (button == 3) {
+			clientGobPick = null;
+			if (ui.gui != null)
+				ui.gui.msg("Object selection cancelled.", java.awt.Color.WHITE);
+			return true;
+		}
+		if (button != 1)
+			return false;
+		Gob gob = null;
+		if (inf != null) {
+			Object[] ca = inf.clickargs();
+			if (ca.length > 1 && ca[1] instanceof Integer)
+				gob = glob.oc.getgob(((Integer) ca[1]).longValue());
+		}
+		if (gob == null) {
+			if (ui.gui != null)
+				ui.gui.msg("Click on an object (right-click cancels).", java.awt.Color.WHITE);
+			return true;
+		}
+		clientGobPick = null;
+		cb.accept(gob);
+		return true;
 	}
 
 	/** H4D: true while the client is placing an object and the placement ghost has loaded. */

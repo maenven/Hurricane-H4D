@@ -783,6 +783,7 @@ public class OptWnd extends Window {
 	public static CheckBox improvedInstrumentMusicWindowCheckBox;
     public static CheckBox preventEscKeyFromClosingWindowsCheckBox;
     public static CheckBox stackWindowsWhenOpenedCheckBox;
+    public static CheckBox barrelTakeAmountCheckBox; // H4D: barrel "Take #" row, see doc/H4D-features/barrel-take-amount.md
 
     public class InterfaceSettingsPanel extends Panel {
 	public InterfaceSettingsPanel(Panel back) {
@@ -1169,6 +1170,16 @@ public class OptWnd extends Window {
             }
         }, rightColumn.pos("bl").adds(0, 2));
         stackWindowsWhenOpenedCheckBox.tooltip = stackWindowsWhenOpenedTooltip;
+        rightColumn = add(barrelTakeAmountCheckBox = new CheckBox("Barrel Window: Take a chosen Amount"){
+            {a = (Utils.getprefb("barrelTakeAmount", true));}
+            public void changed(boolean val) {
+                Utils.setprefb("barrelTakeAmount", val);
+            }
+        }, rightColumn.pos("bl").adds(0, 2));
+        barrelTakeAmountCheckBox.tooltip = RichText.render("Adds an amount box and a $col[218,163,0]{Take #} button to barrel windows, " +
+                "so you can take e.g. 5 flour, salt or cave dust instead of a full stack." +
+                "\n\nWhile it runs, $col[218,163,0]{Automatic Item Stacking} is switched off and then back on." +
+                "\n\n$col[185,185,185]{Reopen the barrel after changing this.}", UI.scale(300));
 
 		Widget backButton;
 		add(backButton = new PButton(UI.scale(200), "Back", 27, back, "Advanced Settings"), leftColumn.pos("bl").adds(0, 30).x(0));
@@ -3367,6 +3378,7 @@ public class OptWnd extends Window {
 	public static CheckBox autoSwitchBootsCheckBox;
 	public static CheckBox autoDropTicksCheckBox;
 	public static CheckBox autoPeaceAnimalsWhenCombatStartsCheckBox;
+	public static CheckBox autoReaggroAnimalsCheckBox;
 	public static CheckBox preventUsingRawHideWhenRidingCheckBox;
 	public static CheckBox blockStoneActionsWithRockCrystalCheckBox;
 	public static CheckBox autoDrinkingCheckBox;
@@ -3556,6 +3568,17 @@ public class OptWnd extends Window {
 				}
 			}, prev.pos("bl").adds(0, 12));
 			autoPeaceAnimalsWhenCombatStartsCheckBox.tooltip = autoPeaceAnimalsWhenCombatStartsTooltip;
+			prev = add(autoReaggroAnimalsCheckBox = new CheckBox("Auto Re-aggro Animals that leave Combat"){
+				{a = Utils.getprefb("autoReaggroAnimals", false);}
+				public void set(boolean val) {
+					Utils.setprefb("autoReaggroAnimals", val);
+					a = val;
+					if (ui != null && ui.gui != null) {
+						ui.gui.optionInfoMsg("Auto Re-aggro Animals is now " + (val ? "ENABLED" : "DISABLED") + ".", (val ? msgGreen : msgRed), Audio.resclip(val ? Toggle.sfxon : Toggle.sfxoff));
+					}
+				}
+			}, prev.pos("bl").adds(0, 12));
+			autoReaggroAnimalsCheckBox.tooltip = autoReaggroAnimalsTooltip;
 			prev = add(preventUsingRawHideWhenRidingCheckBox = new CheckBox("Prevent using Raw Hide when Riding a Horse"){
 				{a = Utils.getprefb("preventUsingRawHideWhenRiding", false);}
 				public void changed(boolean val) {
@@ -5635,6 +5658,10 @@ public class OptWnd extends Window {
 	private static final Object autoPeaceAnimalsWhenCombatStartsTooltip = RichText.render("This will automatically set your status to 'Peace' when combat is initiated with a new target (animals only). " +
 			"\nToggling this on, while in combat, will also autopeace all animals you are currently fighting." +
 			"\n\n$col[218,163,0]{Action Button:} $col[185,185,185]{This setting can also be turned on/off using an action button from the menu grid (Custom Client Extras → Toggles).}", UI.scale(320));
+	private static final Object autoReaggroAnimalsTooltip = RichText.render("Works like the re-aggro in the Ender and Kami clients: whenever an animal drops out of combat with you (it fled, or you peaced it and it ran off), the client immediately starts combat with it again." +
+			"\nApplies to every animal you were fighting, not only your current target. Players are never re-aggroed, and nothing happens if the animal is knocked out, gone, or more than ~18 tiles away." +
+			"\nMost useful together with $col[218,163,0]{Auto-Peace Animals when Combat Starts}." +
+			"\n\n$col[185,185,185]{The per-target re-aggro toggle (button next to the target's peace button, or the hotkey) still works for single targets, including players.}", UI.scale(320));
 	private static final Object blockStoneActionsWithRockCrystalTooltip = RichText.render("While a Rock Crystal is in your inventory, this blocks actions that can use up stone from your inventory, so the crystal isn't used by accident:" +
 			"\n$col[218,163,0]{Crafting} a recipe with a stone ingredient, pressing $col[218,163,0]{Build} on a construction site, and starting the $col[218,163,0]{Landscape} tool (paving)." +
 			"\n\nYou'll see \"Action denied, please remove Rock Crystal to continue your actions.\" until the crystal is out of your inventory.", UI.scale(300));
