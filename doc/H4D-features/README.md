@@ -28,5 +28,6 @@ Small, single-topic files. Read only the ones relevant to the current task — d
 | [vehicle-barrel-filler.md](vehicle-barrel-filler.md) | Ctrl+Right-Click *Fill barrels* on a well/cistern/mill (or cart/wagon) with a cart/wagon/snekkja/knarr: `VehicleBarrelFiller`, `MapView.startClientGobPick`. |
 
 | [animal-stats-overhead.md](animal-stats-overhead.md) | Memorized animal stats (Q/B/M) above heads and best-stat green highlight: `AnimalStatsOverlay`, `CattleId`, Cattle Roster entries. |
+| [auto-butcher.md](auto-butcher.md) | *Auto Butcher* window (stat + limit + genders + area → slaughter and butcher every memorized animal below the limit): `AutoButcher`. |
 
 Tools: [tools/New-MenuGridButton.ps1](tools/New-MenuGridButton.ps1) — generates a menu-grid `.res` file by splicing a name/tooltip/description into an existing button's icon, without needing the (unavailable) official resource editor.

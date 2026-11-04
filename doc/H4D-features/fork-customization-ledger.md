@@ -269,3 +269,18 @@ add an entry here. Procedure: [upstream-merge-workflow.md](upstream-merge-workfl
 - **Shared hooks:** `croster/CattleId.draw` (stats line, name shown while enabled), `CattleId.roster()`,
   `croster/RosterWindow.addroster` (controls), `GameUI.tick` (best-animal tint), `MenuGrid` (toggle).
 - **Detail:** [animal-stats-overhead.md](animal-stats-overhead.md).
+
+## 17. Auto Butcher (slaughter memorized animals below a stat limit)
+
+- **Behavior:** menu-grid button *Auto Butcher* (Custom Client Extras → Other Scripts & Tools) opens a
+  window: stat (milk/meat/wool amount or a quality), "Butcher below" limit, genders, *Skip young*,
+  *Butcher the carcasses*, *Remove them from the Cattle Roster*. *Select area* marks the matching
+  animals red; *Start* slaughters them nearest first and butchers each carcass in place.
+- **Why:** Ian's request (2026-11-04). Slaughter/butcher steps follow Nurgling2's `KillAnimalsAction`
+  and `Butcher` bot.
+- **Fork-owned:** `src/haven/automated/AutoButcher.java`,
+  `res/customclient/menugrid/OtherScriptsAndTools/AutoButcher.res`.
+- **Shared hooks:** `MenuGrid` (button + `useCustom` branch). Reuses `AnimalStatsOverlay.value`/`HIGHLIGHTS`
+  and `CuttingToolAutoEquip.equipBest`. Adds the `CLEAVER` policy there (Butcher's Cleaver beats any other
+  sharp tool), now also used by the auto-equip option for manual *Slaughter* and *Butcher* (Ian, 2026-11-04).
+- **Detail:** [auto-butcher.md](auto-butcher.md).

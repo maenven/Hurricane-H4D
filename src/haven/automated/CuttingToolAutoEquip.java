@@ -52,7 +52,9 @@ public class CuttingToolAutoEquip {
 		/** Any sharp tool, highest quality wins. */
 		SHARP,
 		/** Axes only, by type first (Stone < Metal < Woodsman's), then quality. */
-		AXE
+		AXE,
+		/** Any sharp tool, but a Butcher's Cleaver always wins (Slaughter and Butcher); then quality. */
+		CLEAVER
 	}
 
 	/** Axe types for chopping, worst to best. */
@@ -62,8 +64,8 @@ public class CuttingToolAutoEquip {
 	public static Policy policyFor(String option) {
 		if (!enabled() || option == null)
 			return null;
-		if (option.equals("Butcher"))
-			return Policy.SHARP;
+		if (option.equals("Butcher") || option.equals("Slaughter"))
+			return Policy.CLEAVER;
 		if (option.equals("Split") && isBlock(lastRightClickedItemName))
 			return Policy.SHARP;
 		if (option.equals("Chop") || option.equals("Chop into blocks"))
@@ -104,7 +106,9 @@ public class CuttingToolAutoEquip {
 			return -1;
 		if (policy == Policy.AXE)
 			return AXE_RANK.indexOf(n);
-		return SHARP_TOOLS.contains(n) ? 0 : -1;
+		if (!SHARP_TOOLS.contains(n))
+			return -1;
+		return (policy == Policy.CLEAVER && n.equals("Butcher's Cleaver")) ? 1 : 0;
 	}
 
 	private static double quality(GItem item) {
