@@ -256,9 +256,10 @@ add an entry here. Procedure: [upstream-merge-workflow.md](upstream-merge-workfl
 
 ## 16. Memorized animal stats above heads
 
-- **Behavior:** animals in the Cattle Roster show `Q | B | M` (quality, breeding quality, milk %)
-  above their name even with the roster closed; optionally the animal(s) with the best value of one
-  chosen stat among their species' roster get green text and a green gob tint. Toggle button
+- **Behavior:** animals in the Cattle Roster show their milk/meat/wool amounts and, below that,
+  `Q | B | MQ` (quality, breeding quality, milk %) above their name even with the roster closed;
+  optionally the animal(s) with the best value of one chosen stat among their species' roster get
+  green text and a green gob tint, or (Heatmap) every animal is colored green → yellow → red. Toggle button
   *Custom Client Extras → Toggles → Animal Stats Above Heads* and a checkbox + "highlight best"
   dropdown on the Cattle Roster button row (prefs `animalStatsOverhead`, `animalStatsHighlight`).
 - **Why:** Ian's request (2026-11-04): stop reopening the roster to compare animals.

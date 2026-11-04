@@ -81,22 +81,28 @@ public class CattleId extends GAttrib implements RenderTree.Node, PView.Render2D
 	    }
 	    if(stats) { // H4D: memorized animal stats above the name (AnimalStatsOverlay)
 		String txt = haven.automated.AnimalStatsOverlay.text(entry);
-		boolean best = haven.automated.AnimalStatsOverlay.isBest(entry);
-		if((rstats == null) || !txt.equals(lstats) || (best != lbest)) {
-		    if(rstats != null)
-			rstats.dispose();
-		    Color col = best ? haven.automated.AnimalStatsOverlay.BEST_TEXT : Color.WHITE;
-		    rstats = txt.isEmpty() ? null : new TexI(rasterimg(blurmask2(Utils.outline2(fnd.render(txt, col).img, Color.BLACK, true).getRaster(), UI.rscale(1.0), UI.rscale(1.0), Color.BLACK)));
+		Color hl = haven.automated.AnimalStatsOverlay.colorOf(entry);
+		if((rstats == null) || !txt.equals(lstats) || !java.util.Objects.equals(hl, lcol)) {
+		    for(Tex t : (rstats == null) ? new Tex[0] : rstats)
+			t.dispose();
+		    Color col = (hl != null) ? hl : Color.WHITE;
+		    String[] lines = txt.isEmpty() ? new String[0] : txt.split("\n");
+		    rstats = new Tex[lines.length];
+		    for(int i = 0; i < lines.length; i++)
+			rstats[i] = new TexI(rasterimg(blurmask2(Utils.outline2(fnd.render(lines[i], col).img, Color.BLACK, true).getRaster(), UI.rscale(1.0), UI.rscale(1.0), Color.BLACK)));
 		    lstats = txt;
-		    lbest = best;
+		    lcol = hl;
 		}
-		if(rstats != null)
-		    g.aimage(rstats, sc.sub(0, (rnm != null) ? rnm.sz().y : 0), 0.5, 1.0);
+		Coord lc = sc.sub(0, (rnm != null) ? rnm.sz().y : 0);
+		for(int i = rstats.length - 1; i >= 0; i--) { // last line sits right above the name
+		    g.aimage(rstats[i], lc, 0.5, 1.0);
+		    lc = lc.sub(0, rstats[i].sz().y);
+		}
 	    }
 	}
     }
 
     private String lstats;
-    private boolean lbest;
-    private Tex rstats;
+    private Color lcol;
+    private Tex[] rstats;
 }

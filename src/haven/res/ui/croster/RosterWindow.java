@@ -46,13 +46,16 @@ public class RosterWindow extends Window {
 
     private haven.automated.AnimalStatsOverlay.ShowBox statsShow;
     private haven.automated.AnimalStatsOverlay.HighlightBox statsHighlight;
+    private haven.automated.AnimalStatsOverlay.HeatmapBox statsHeatmap;
     private void placeAnimalStatsControls() {
 	if(statsShow == null) {
 	    statsShow = add(new haven.automated.AnimalStatsOverlay.ShowBox());
-	    statsHighlight = add(new haven.automated.AnimalStatsOverlay.HighlightBox(UI.scale(170)));
+	    statsHighlight = add(new haven.automated.AnimalStatsOverlay.HighlightBox(UI.scale(190)));
+	    statsHeatmap = add(new haven.automated.AnimalStatsOverlay.HeatmapBox());
 	}
 	int right = CattleRoster.WIDTH;
-	statsHighlight.move(new Coord(right - statsHighlight.sz.x, btny));
+	statsHeatmap.move(new Coord(right - statsHeatmap.sz.x, btny + (statsHighlight.sz.y - statsHeatmap.sz.y) / 2));
+	statsHighlight.move(new Coord(statsHeatmap.c.x - UI.scale(8) - statsHighlight.sz.x, btny));
 	statsShow.move(new Coord(statsHighlight.c.x - UI.scale(10) - statsShow.sz.x, btny + (statsHighlight.sz.y - statsShow.sz.y) / 2));
     }
 

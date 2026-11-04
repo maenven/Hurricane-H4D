@@ -10,9 +10,13 @@
   `Horse`, `Pig`, `Teimdeer`; local copies exist in Nurgling2). Fields `seedq`, `milkq`, `meatq`,
   `hideq`, `woolq` are read by reflection (`value()`); `q` is on the local `Entry`. milkq/meatq/... are
   the roster's percentages, shown as `%`. Milk is hidden for `Horse`/`Pig`.
+- **Label:** two lines above the name: amounts (`milk`, `meat`, `wool` fields; Ian: quantity matters
+  more than quality) on top, qualities (`Q`, `B`, `MQ %`, plus the highlighted stat if not shown) below.
 - **Drawing:** `CattleId.draw` (render thread) draws the stats line above the name; the name is now also
   drawn while the overlay is on, not only while the roster window is visible.
-- **Highlight:** `GameUI.tick` → `AnimalStatsOverlay.tick` every 0.5 s on the UI thread computes the best
-  ids per roster (needs ≥ 2 animals with the stat; ties all win) over *all* roster entries, not just
+- **Highlight:** `GameUI.tick` → `AnimalStatsOverlay.tick` every 0.5 s on the UI thread computes a color
+  per animal id per roster (needs ≥ 2 animals with the stat): best mode = green for the max (ties all win);
+  Heatmap mode (pref `animalStatsHeatmap`) = `heat((v-min)/(max-min))`, green → yellow → red, quantized
+  to 10 steps so the `ColorMask`s/textures are reused. Computed over *all* roster entries, not just
   visible gobs, and sets/removes the `BestHighlight` SetupMod under `synchronized(gob)`. Never from
   `GAttrib.ctick`: `Gob.ctick` iterates the attr map, so setattr there throws CME.
