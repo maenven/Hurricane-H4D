@@ -299,6 +299,7 @@ public class WItem extends Widget implements DTarget {
 		}
 		try {
 			CuttingToolAutoEquip.lastRightClickedItemName = item.getname();
+			CuttingToolAutoEquip.noteItemMenu(item);
 		} catch (Exception ignored) {
 		}
 		if (ui.modctrl && OptWnd.autoSelect1stFlowerMenuCheckBox.a && !ui.modshift && !ui.modmeta

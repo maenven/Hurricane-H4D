@@ -320,14 +320,23 @@ public class FlowerMenu extends Widget {
 	    wdgmsg("cl", -1);
 	} else {
 		final CuttingToolAutoEquip.Policy toolPolicy = equippingTool ? null : CuttingToolAutoEquip.policyFor(option.name);
-		if(toolPolicy != null && CuttingToolAutoEquip.needsSwap(ui.gui, toolPolicy)) {
-			// H4D: put the best cutting tool in hand first, then send the choice.
+		if(toolPolicy != null && !CuttingToolAutoEquip.consumeReplay(option.name)
+				&& CuttingToolAutoEquip.needsSwap(ui.gui, toolPolicy) && CuttingToolAutoEquip.canReplay()) {
+			// H4D: close the menu, put the best cutting tool in hand (the server won't move items while a
+			// flower menu is open), then right-click the same thing again and pick the same option.
 			equippingTool = true;
+			wdgmsg("cl", -1);
 			final GameUI gui = ui.gui;
-			final int modflags = ui.modflags();
+			final String name = option.name;
 			Thread t = new Thread(() -> {
+				try {
+					Thread.sleep(100);
+				} catch (InterruptedException e) {
+					return;
+				}
 				CuttingToolAutoEquip.equipBest(gui, toolPolicy);
-				sendChoice(option, modflags);
+				if(!CuttingToolAutoEquip.replay(name))
+					gui.ui.msg("Tool equipped, choose " + name + " again.");
 			}, "CuttingToolAutoEquip");
 			t.setDaemon(true);
 			t.start();

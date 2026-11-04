@@ -2456,6 +2456,7 @@ public class MapView extends PView implements DTarget, Console.Directory, PFList
                             pfthread.interrupt();
                         }
                     }
+					haven.automated.CuttingToolAutoEquip.noteGobMenu(MapView.this, args); // H4D: to reopen the menu after a tool swap
 					wdgmsg("click", args);
 					if (OptWnd.autoSelect1stFlowerMenuCheckBox.a) {
 						if (ui.modctrl) {

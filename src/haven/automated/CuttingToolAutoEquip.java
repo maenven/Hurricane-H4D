@@ -39,6 +39,63 @@ public class CuttingToolAutoEquip {
 	/** Name of the last inventory item the player right-clicked, so "Split" only reacts to blocks. */
 	public static volatile String lastRightClickedItemName = null;
 
+	/*
+	 * What opened the last flower menu, so a choice can be replayed after the tool swap. The menu is closed
+	 * before swapping (the server doesn't move items while a flower menu is open, which is why the swap
+	 * failed with "couldn't pick up the tool"), then the same item / object is right-clicked again and the
+	 * same option picked, exactly as if the player did it with the tool already in hand.
+	 */
+	private static volatile GItem lastMenuItem = null;
+	private static volatile Object[] lastMenuClick = null;
+	private static volatile MapView lastMenuMap = null;
+	private static volatile String replayOption = null;
+
+	public static void noteItemMenu(GItem item) {
+		lastMenuItem = item;
+		lastMenuClick = null;
+	}
+
+	public static void noteGobMenu(MapView map, Object[] clickArgs) {
+		lastMenuClick = clickArgs.clone();
+		lastMenuMap = map;
+		lastMenuItem = null;
+	}
+
+	/** True if we know how to reopen the last menu. */
+	public static boolean canReplay() {
+		GItem i = lastMenuItem;
+		return (i != null && i.parent != null) || (lastMenuClick != null && lastMenuMap != null);
+	}
+
+	/** True once for the option we replayed ourselves, so it goes straight through instead of swapping again. */
+	public static boolean consumeReplay(String option) {
+		if (option != null && option.equals(replayOption)) {
+			replayOption = null;
+			return true;
+		}
+		return false;
+	}
+
+	/** Reopens the last menu and picks the option in it. */
+	public static boolean replay(String option) {
+		replayOption = option;
+		FlowerMenu.setNextSelection(option);
+		GItem i = lastMenuItem;
+		Object[] click = lastMenuClick;
+		MapView map = lastMenuMap;
+		if (i != null && i.parent != null) {
+			i.wdgmsg("iact", Coord.z, 0);
+			return true;
+		}
+		if (click != null && map != null) {
+			map.wdgmsg("click", click);
+			return true;
+		}
+		replayOption = null;
+		FlowerMenu.setNextSelection(null);
+		return false;
+	}
+
 	public static boolean enabled() {
 		return OptWnd.autoEquipCuttingToolCheckBox != null && OptWnd.autoEquipCuttingToolCheckBox.a;
 	}
